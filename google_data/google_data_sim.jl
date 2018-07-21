@@ -1,22 +1,22 @@
 push!(LOAD_PATH,"simulator")
 using EVQueues, CSV, DataFrames, PyPlot
 
-data = CSV.read("google_data/Google_Test_Data_pot.csv",
-                datarow=1,
+data = CSV.read("google_data/Google_Test_Data_filtered.csv",
+                datarow=2,
                 header=["arribo", "arriboAbsoluto", "permanencia", "tiempoCarga"],
                 types=[Float64, Float64, Float64, Float64])
 
 #ordeno por arribo
-sort!(data);
+sort!(data, [:arriboAbsoluto]);
 
-arribos = data[:arribo];
-partidas = data[:arribo]+data[:permanencia];
+arribos = data[:arriboAbsoluto];
+partidas = data[:arriboAbsoluto]+data[:permanencia];
 trabajos = data[:tiempoCarga];
 
-C=3000;
+C=100;
 
 #simula usando edf a partir de la traza. Cambiar edf por llf, llr, pf, parallel para las otras politicas.
-sim = ev_llf_trace(arribos,trabajos,partidas,C)
+sim = ev_llr_trace(arribos,trabajos,partidas,C)
 compute_statistics!(sim)
 
 #Ploteo la salida como escalera. where=post es para que se mantenga constante a la derecha del intervalo.
