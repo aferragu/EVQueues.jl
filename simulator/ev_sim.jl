@@ -1,6 +1,9 @@
 
 function ev_sim(lambda,mu,gamma,Tfinal,C,policy)
 
+    #barra de progreso
+    prog=Progress(101, dt=0.5, desc="Simulando... ");
+
     #variables aleatorias de los clientes
     arr_rng=Exponential(1.0/lambda);
     work_rng=Exponential(1.0/mu);
@@ -109,6 +112,9 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy)
 
         dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF])
 
+        progreso = ceil(Int64,t/Tfinal*100);
+        update!(prog,progreso);
+
     end
 
     T=T[1:i];
@@ -117,7 +123,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy)
     W=W[1:j,:];
 
     pD=expired/arrivals;
-
+    next!(prog);
     #rangeX,pX,rangeY,pY,avgX,avgY,avgW = compute_statistics(T,X,Y,W,pD)
     #return EVSim(T,X,Y,W,pD,rangeX,pX,rangeY,pY,avgX,avgY,avgW)
     return EVSim(T,X,Y,W,pD,workloads,deadlinesON,policy(workloads,deadlinesON,C)*1.0)

@@ -11,6 +11,7 @@ policy: una de las politicas definidas en EVSim
 function ev_sim_trace(arribos,demandas,salidas,C,policy)
 
     num = length(arribos); #no. de vehiculos a procesar.
+    prog=Progress(num+1, dt=0.5, desc="Simulando... ");
 
     eventos = 3*num+1;
 
@@ -122,6 +123,7 @@ function ev_sim_trace(arribos,demandas,salidas,C,policy)
 
         dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF])
 
+        update!(prog,arrivals);
     end
 
     T=T[1:i];
@@ -130,6 +132,8 @@ function ev_sim_trace(arribos,demandas,salidas,C,policy)
     W=W[1:j,:];
 
     pD=expired/arrivals;
+
+    next!(prog);
 
     #rangeX,pX,rangeY,pY,avgX,avgY,avgW = compute_statistics(T,X,Y,W,pD)
     #return EVSim(T,X,Y,W,pD,rangeX,pX,rangeY,pY,avgX,avgY,avgW)

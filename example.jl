@@ -6,7 +6,7 @@ mu=1.0;
 gamma=0.5;
 C=80;
 
-Tfinal=100.0;
+Tfinal=1000.0;
 
 
 @time sim = ev_edf(lambda,mu,gamma,Tfinal,C)

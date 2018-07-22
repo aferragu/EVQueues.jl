@@ -2,7 +2,7 @@ __precompile__()
 
 module EVQueues
 
-using Distributions #, Convex, SCS
+using Distributions, ProgressMeter
 
 export ev_parallel, ev_pf, ev_edf, ev_llf, ev_llr, ev_exact, compute_statistics!, EVSim, ev_parallel_trace, ev_pf_trace, ev_edf_trace, ev_llf_trace, ev_llr_trace, ev_exact_trace
 
