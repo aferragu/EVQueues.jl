@@ -49,8 +49,8 @@ function ev_parallel(lambda,mu,gamma,Tfinal,C=Inf)
 end
 
 
-function ev_parallel_trace(arribos,demandas,salidas,Tfinal,C=Inf)
-    ev_sim_trace(arribos,demandas,salidas,C,parallel_policy)
+function ev_parallel_trace(arribos,demandas,salidas,Tfinal,C=Inf,snapshot=Inf)
+    ev_sim_trace(arribos,demandas,salidas,parallel_policy,C,snapshot)
 end
 
 function edf_policy(workloads,deadlinesON,C)
@@ -78,8 +78,8 @@ function ev_edf(lambda,mu,gamma,Tfinal,C=Inf)
     ev_sim(lambda,mu,gamma,Tfinal,C,edf_policy)
 end
 
-function ev_edf_trace(arribos,demandas,salidas,C=Inf)
-    ev_sim_trace(arribos,demandas,salidas,C,edf_policy)
+function ev_edf_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
+    ev_sim_trace(arribos,demandas,salidas,edf_policy,C,snapshot)
 end
 
 function llf_policy(workloads,deadlinesON,C)
@@ -107,8 +107,8 @@ function ev_llf(lambda,mu,gamma,Tfinal,C=Inf)
     ev_sim(lambda,mu,gamma,Tfinal,C,llf_policy)
 end
 
-function ev_llf_trace(arribos,demandas,salidas,C=Inf)
-    ev_sim_trace(arribos,demandas,salidas,C,llf_policy)
+function ev_llf_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
+    ev_sim_trace(arribos,demandas,salidas,llf_policy,C,snapshot)
 end
 
 function llr_policy(workloads,deadlinesON,C)
@@ -137,8 +137,8 @@ function ev_llr(lambda,mu,gamma,Tfinal,C=Inf)
 end
 
 
-function ev_llr_trace(arribos,demandas,salidas,C=Inf)
-    ev_sim_trace(arribos,demandas,salidas,C,llr_policy)
+function ev_llr_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
+    ev_sim_trace(arribos,demandas,salidas,llr_policy,C,snapshot)
 end
 
 function pf_policy(workloads,deadlinesON,C)
@@ -190,8 +190,8 @@ function ev_pf(lambda,mu,gamma,Tfinal,C=Inf)
     ev_sim(lambda,mu,gamma,Tfinal,C,pf_policy)
 end
 
-function ev_pf_trace(arribos,demandas,salidas,C=Inf)
-    ev_sim_trace(arribos,demandas,salidas,C,pf_policy)
+function ev_pf_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
+    ev_sim_trace(arribos,demandas,salidas,pf_policy,C,snapshot)
 end
 
 function exact_policy(workloads,deadlinesON,C)
@@ -227,8 +227,8 @@ function ev_exact(lambda,mu,gamma,Tfinal,C=Inf)
     ev_sim(lambda,mu,gamma,Tfinal,C,exact_policy)
 end
 
-function ev_exact_trace(arribos,demandas,salidas,C=Inf)
-    ev_sim_trace(arribos,demandas,salidas,C,exact_policy)
+function ev_exact_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
+    ev_sim_trace(arribos,demandas,salidas,exact_policy,C,snapshot)
 end
 
 
