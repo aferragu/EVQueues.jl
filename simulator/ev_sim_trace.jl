@@ -43,6 +43,7 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshot_time)
     #inicializo snapshots para que si no hay ninguno igual se cree.
     workloads_snapshot = Array{Float64}(0);
     deadlinesON_snapshot = Array{Float64}(0);
+    U_snapshot = 0.0;
 
     nextArr = arribos[arrivals+1]-t; #inicializo al primer arribo
     nextCharge = Inf;
@@ -107,6 +108,7 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshot_time)
         elseif caso==5      #take snapshot
             workloads_snapshot = workloads;
             deadlinesON_snapshot = deadlinesON;
+            U_snapshot = policy(workloads,deadlinesON,C)*1.0;
             nextSnapshot = Inf;
         end
 
@@ -148,6 +150,6 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshot_time)
 
     #rangeX,pX,rangeY,pY,avgX,avgY,avgW = compute_statistics(T,X,Y,W,pD)
     #return EVSim(T,X,Y,W,pD,rangeX,pX,rangeY,pY,avgX,avgY,avgW)
-    return EVSim(T,X,Y,W,pD,workloads_snapshot,deadlinesON_snapshot,policy(workloads,deadlinesON,C)*1.0)
+    return EVSim(T,X,Y,W,pD,workloads_snapshot,deadlinesON_snapshot,U_snapshot)
 
 end

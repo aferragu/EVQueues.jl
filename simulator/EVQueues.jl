@@ -49,7 +49,7 @@ function ev_parallel(lambda,mu,gamma,Tfinal,C=Inf)
 end
 
 
-function ev_parallel_trace(arribos,demandas,salidas,Tfinal,C=Inf,snapshot=Inf)
+function ev_parallel_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
     ev_sim_trace(arribos,demandas,salidas,parallel_policy,C,snapshot)
 end
 
