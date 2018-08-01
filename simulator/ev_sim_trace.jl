@@ -8,7 +8,7 @@ salidas: lista de tiempos de salida
 C: no. de cargadores simultaneos.
 policy: una de las politicas definidas en EVSim
 =#
-function ev_sim_trace(arribos,demandas,salidas,C,policy)
+function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshot_time)
 
     num = length(arribos); #no. de vehiculos a procesar.
     prog=Progress(num+1, dt=0.5, desc="Simulando... ");
@@ -40,17 +40,24 @@ function ev_sim_trace(arribos,demandas,salidas,C,policy)
     arrivals=0;
     expired=0;
 
+    #inicializo snapshots para que si no hay ninguno igual se cree.
+    workloads_snapshot = Array{Float64}(0);
+    deadlinesON_snapshot = Array{Float64}(0);
+
     nextArr = arribos[arrivals+1]-t; #inicializo al primer arribo
     nextCharge = Inf;
     nextDepON = Inf;
     nextDepOFF = Inf;
 
-    dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF])
+    nextSnapshot = snapshot_time; #tiempo al cual hacer snapshot del estado
+
+    dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
     while dt<Inf
 
         t=t+dt;
         nextArr=nextArr-dt
+        nextSnapshot = nextSnapshot - dt;
 
         workloads = workloads - U*dt;
         deadlinesON = deadlinesON - dt;
@@ -97,6 +104,10 @@ function ev_sim_trace(arribos,demandas,salidas,C,policy)
             y=y-1;
             aux,k = findmin(deadlinesOFF);
             deadlinesOFF = [deadlinesOFF[1:k-1];deadlinesOFF[k+1:end]]
+        elseif caso==5      #take snapshot
+            workloads_snapshot = workloads;
+            deadlinesON_snapshot = deadlinesON;
+            nextSnapshot = Inf;
         end
 
         #update charging rates
@@ -121,7 +132,7 @@ function ev_sim_trace(arribos,demandas,salidas,C,policy)
         X[i]=x;
         Y[i]=y;
 
-        dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF])
+        dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
         update!(prog,arrivals);
     end
@@ -137,6 +148,6 @@ function ev_sim_trace(arribos,demandas,salidas,C,policy)
 
     #rangeX,pX,rangeY,pY,avgX,avgY,avgW = compute_statistics(T,X,Y,W,pD)
     #return EVSim(T,X,Y,W,pD,rangeX,pX,rangeY,pY,avgX,avgY,avgW)
-    return EVSim(T,X,Y,W,pD,workloads,deadlinesON,policy(workloads,deadlinesON,C)*1.0)
+    return EVSim(T,X,Y,W,pD,workloads_snapshot,deadlinesON_snapshot,policy(workloads,deadlinesON,C)*1.0)
 
 end

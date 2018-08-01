@@ -11,7 +11,7 @@ trabajos = [4.0;5.0;6.0];
 C=1;
 
 #simula usando edf a partir de la traza. Cambiar edf por llf, llr, pf, parallel para las otras politicas.
-sim = ev_edf_trace(arribos,trabajos,partidas,C)
+sim = ev_edf_trace(arribos,trabajos,partidas,C,2.0)
 compute_statistics!(sim)
 
 #Ploteo la salida como escalera. where=post es para que se mantenga constante a la derecha del intervalo.
