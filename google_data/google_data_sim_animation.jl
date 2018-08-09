@@ -10,18 +10,18 @@ data = CSV.read("google_data/Google_Test_Data_filtered.csv",
 sort!(data, [:arriboAbsoluto]);
 
 #filtro 2 dias de autos
-Tfinal = 2*86400;
+Tfinal = 86400;
 idx = data[:arriboAbsoluto].<Tfinal;
 
 arribos = data[idx,:arriboAbsoluto];
 partidas = data[idx,:arriboAbsoluto]+data[idx,:permanencia];
 trabajos = data[idx,:tiempoCarga];
 
-C=50;
+C=30;
 
-snaps = collect(60:60:172800);
+snaps = collect(120:120:Tfinal);
 #simula usando edf a partir de la traza. Cambiar edf por llf, llr, pf, parallel para las otras politicas.
-sim = ev_llr_trace(arribos,trabajos,partidas,C;snapshots=snaps)
+sim = ev_llf_trace(arribos,trabajos,partidas,C;snapshots=snaps)
 compute_statistics!(sim)
 
 
@@ -30,7 +30,7 @@ prog=Progress(length(snaps), dt=1, desc="Creando animacion... ");
 anim = @animate for i=1:length(snaps)
 
     #plot de cantidad de vehiculos en carga
-    p1 = plot(sim.T[sim.T.<snaps[i]],sim.X[sim.T.<snaps[i]],xlims=(0,Tfinal),ylims=(0,maximum(sim.X)),color=:blue,legend=:none)
+    p1 = plot(sim.T[sim.T.<snaps[i]],sim.X[sim.T.<snaps[i]],xlims=(0,Tfinal),ylims=(0,maximum(sim.X)),color=:blue,legend=:none,linewidth=3)
 
     #CDF de las cargas remanentes
     j=sim.J[i];
@@ -38,10 +38,10 @@ anim = @animate for i=1:length(snaps)
     n=length(sw);
 
 
-    p2 = plot(legend=:none,xlim=(0,1))
+    p2 = plot(legend=:none,xlim=(0,4*mean(trabajos)),ylim=(0,1))
 
     if n>0
-        plot!(p2,sw,(1:n)/n,line=:steppost,color=:blue)
+        plot!(p2,sw,(1:n)/n,line=:steppost,color=:blue,linewidth=3)
     end
 
     w=sim.workloads[i];
