@@ -13,7 +13,7 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshots)
     num = length(arribos); #no. de vehiculos a procesar.
     prog=Progress(num+1, dt=0.5, desc="Simulando... ");
 
-    eventos = 3*num+1;
+    eventos = 3*num+1+length(snapshots);
 
     #valores iniciales
     T=zeros(eventos);
