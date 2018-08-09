@@ -9,7 +9,7 @@ C=80;
 Tfinal=1000.0;
 
 
-@time sim = ev_edf(lambda,mu,gamma,Tfinal,C)
+@time sim = ev_parallel(lambda,mu,gamma,Tfinal,C)
 compute_statistics!(sim)
 
 rW = sim.W[:,2];

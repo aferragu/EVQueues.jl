@@ -1,5 +1,5 @@
 
-function ev_sim(lambda,mu,gamma,Tfinal,C,policy)
+function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
 
     #barra de progreso
     prog=Progress(101, dt=0.5, desc="Simulando... ");
@@ -25,6 +25,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy)
     Y[1]=y;
     i=1;    #event counter
     j=0;    #finished job counter
+    m=1;    #snapshot counter
 
     workloads = Array{Float64}(0);
     workloadsOrig = Array{Float64}(0);
@@ -35,17 +36,25 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy)
     arrivals=0;
     expired=0;
 
+    workloads_snapshot = Array{Array{Float64}}(0);
+    deadlinesON_snapshot = Array{Array{Float64}}(0);
+    U_snapshot = Array{Union{Float64,Vector{Float64}}}(0);
+    j_snapshot =  Array{Int64}(0);
+
     nextArr = rand(arr_rng);
     nextCharge = Inf;
     nextDepON = Inf;
     nextDepOFF = Inf;
 
-    dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF])
+    nextSnapshot = snapshots[m];
+
+    dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
     while t<Tfinal
 
         t=t+dt;
-        nextArr=nextArr-dt
+        nextArr=nextArr-dt;
+        nextSnapshot = nextSnapshot - dt;
 
         workloads = workloads - U*dt;
         deadlinesON = deadlinesON - dt;
@@ -86,6 +95,19 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy)
             y=y-1;
             aux,k = findmin(deadlinesOFF);
             deadlinesOFF = [deadlinesOFF[1:k-1];deadlinesOFF[k+1:end]]
+        elseif caso==5      #take snapshot
+            push!(workloads_snapshot,workloads);
+            push!(deadlinesON_snapshot,deadlinesON);
+            push!(U_snapshot,policy(workloads,deadlinesON,C)*1.0);
+            push!(j_snapshot,j);
+
+            if (m<length(snapshots))
+                m=m+1;
+                nextSnapshot = snapshots[m]-t;
+            else
+                nextSnapshot = Inf;
+            end
+
         end
 
         #update charging rates
@@ -110,7 +132,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy)
         X[i]=x;
         Y[i]=y;
 
-        dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF])
+        dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
         progreso = ceil(Int64,t/Tfinal*100);
         update!(prog,progreso);
@@ -126,6 +148,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy)
     next!(prog);
     #rangeX,pX,rangeY,pY,avgX,avgY,avgW = compute_statistics(T,X,Y,W,pD)
     #return EVSim(T,X,Y,W,pD,rangeX,pX,rangeY,pY,avgX,avgY,avgW)
-    return EVSim(T,X,Y,W,pD,workloads,deadlinesON,policy(workloads,deadlinesON,C)*1.0)
+#    return EVSim(T,X,Y,W,pD,workloads,deadlinesON,policy(workloads,deadlinesON,C)*1.0)
+    return EVSim(T,X,Y,W,pD,workloads_snapshot,deadlinesON_snapshot,U_snapshot,j_snapshot)
 
 end

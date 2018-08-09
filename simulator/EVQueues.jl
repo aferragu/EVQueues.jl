@@ -13,9 +13,10 @@ mutable struct EVSim
     Y::Vector{UInt16}   #already charged
     W::Array{Float64,2} #::Vector{Float64}  #original workload, departure workload, original deadline
     pD::Float64         #probability of expired deadline
-    workloads::Vector{Float64}
-    deadlinesON::Vector{Float64}
-    U:: Union{Float64,Vector{Float64}}
+    workloads::Array{Vector{Float64}}
+    deadlinesON::Array{Vector{Float64}}
+    U:: Array{Union{Float64,Vector{Float64}}}
+    J::Array{Int64}
     rangeX::Vector{Integer}
     pX::Vector{Float64} #steady state X
     rangeY::Vector{Integer}
@@ -23,7 +24,7 @@ mutable struct EVSim
     avgX::Float64       #average X
     avgY::Float64       #average Y
     avgW::Float64       #average unfinished workload (taking finished into account)
-    EVSim(T,X,Y,W,pD,workloads,deadlinesON,U)=new(T,X,Y,W,pD,workloads,deadlinesON,U,[],[],[],[],NaN,NaN,NaN)
+    EVSim(T,X,Y,W,pD,workloads,deadlinesON,U,J)=new(T,X,Y,W,pD,workloads,deadlinesON,U,J,[],[],[],[],NaN,NaN,NaN)
 end
 
 include("ev_sim.jl")  ##codigo del simulador comun
@@ -44,13 +45,14 @@ function parallel_policy(workloads,deadlinesON,C)
     return U;
 end
 
-function ev_parallel(lambda,mu,gamma,Tfinal,C=Inf)
-    ev_sim(lambda,mu,gamma,Tfinal,C,parallel_policy)
+
+function ev_parallel(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,parallel_policy,snapshots)
 end
 
 
-function ev_parallel_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
-    ev_sim_trace(arribos,demandas,salidas,parallel_policy,C,snapshot)
+function ev_parallel_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,parallel_policy,C,snapshots)
 end
 
 function edf_policy(workloads,deadlinesON,C)
@@ -74,12 +76,12 @@ function edf_policy(workloads,deadlinesON,C)
     return U;
 end
 
-function ev_edf(lambda,mu,gamma,Tfinal,C=Inf)
-    ev_sim(lambda,mu,gamma,Tfinal,C,edf_policy)
+function ev_edf(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,edf_policy,snapshots)
 end
 
-function ev_edf_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
-    ev_sim_trace(arribos,demandas,salidas,edf_policy,C,snapshot)
+function ev_edf_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,edf_policy,C,snapshots)
 end
 
 function llf_policy(workloads,deadlinesON,C)
@@ -103,12 +105,12 @@ function llf_policy(workloads,deadlinesON,C)
     return U;
 end
 
-function ev_llf(lambda,mu,gamma,Tfinal,C=Inf)
-    ev_sim(lambda,mu,gamma,Tfinal,C,llf_policy)
+function ev_llf(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,llf_policy,snapshots)
 end
 
-function ev_llf_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
-    ev_sim_trace(arribos,demandas,salidas,llf_policy,C,snapshot)
+function ev_llf_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,llf_policy,C,snapshots)
 end
 
 function llr_policy(workloads,deadlinesON,C)
@@ -132,13 +134,13 @@ function llr_policy(workloads,deadlinesON,C)
     return U;
 end
 
-function ev_llr(lambda,mu,gamma,Tfinal,C=Inf)
-    ev_sim(lambda,mu,gamma,Tfinal,C,llr_policy)
+function ev_llr(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,llr_policy,snapshots)
 end
 
 
-function ev_llr_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
-    ev_sim_trace(arribos,demandas,salidas,llr_policy,C,snapshot)
+function ev_llr_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,llr_policy,C,snapshots)
 end
 
 function pf_policy(workloads,deadlinesON,C)
@@ -186,12 +188,12 @@ function compute_pf(workloads,deadlinesON,C)
 
 end
 
-function ev_pf(lambda,mu,gamma,Tfinal,C=Inf)
-    ev_sim(lambda,mu,gamma,Tfinal,C,pf_policy)
+function ev_pf(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,pf_policy,snapshots)
 end
 
-function ev_pf_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
-    ev_sim_trace(arribos,demandas,salidas,pf_policy,C,snapshot)
+function ev_pf_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,pf_policy,C,snapshots)
 end
 
 function exact_policy(workloads,deadlinesON,C)
@@ -223,12 +225,12 @@ function exact_policy(workloads,deadlinesON,C)
     return U;
 end
 
-function ev_exact(lambda,mu,gamma,Tfinal,C=Inf)
-    ev_sim(lambda,mu,gamma,Tfinal,C,exact_policy)
+function ev_exact(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,exact_policy,snapshots)
 end
 
-function ev_exact_trace(arribos,demandas,salidas,C=Inf,snapshot=Inf)
-    ev_sim_trace(arribos,demandas,salidas,exact_policy,C,snapshot)
+function ev_exact_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,exact_policy,C,snapshots)
 end
 
 

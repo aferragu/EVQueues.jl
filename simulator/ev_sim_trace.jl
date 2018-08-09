@@ -8,7 +8,7 @@ salidas: lista de tiempos de salida
 C: no. de cargadores simultaneos.
 policy: una de las politicas definidas en EVSim
 =#
-function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshot_time)
+function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshots)
 
     num = length(arribos); #no. de vehiculos a procesar.
     prog=Progress(num+1, dt=0.5, desc="Simulando... ");
@@ -30,6 +30,7 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshot_time)
     Y[1]=y;
     i=1;    #event counter
     j=0;    #finished job counter
+    m=1;    #snapshot counter
 
     workloads = Array{Float64}(0);
     workloadsOrig = Array{Float64}(0);
@@ -41,16 +42,17 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshot_time)
     expired=0;
 
     #inicializo snapshots para que si no hay ninguno igual se cree.
-    workloads_snapshot = Array{Float64}(0);
-    deadlinesON_snapshot = Array{Float64}(0);
-    U_snapshot = 0.0;
+    workloads_snapshot = Array{Array{Float64}}(0);
+    deadlinesON_snapshot = Array{Array{Float64}}(0);
+    U_snapshot = Array{Union{Float64,Vector{Float64}}}(0);
+    j_snapshot =  Array{Int64}(0);
 
     nextArr = arribos[arrivals+1]-t; #inicializo al primer arribo
     nextCharge = Inf;
     nextDepON = Inf;
     nextDepOFF = Inf;
 
-    nextSnapshot = snapshot_time; #tiempo al cual hacer snapshot del estado
+    nextSnapshot = snapshots[m]; #tiempo al cual hacer snapshot del estado
 
     dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
@@ -106,10 +108,18 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshot_time)
             aux,k = findmin(deadlinesOFF);
             deadlinesOFF = [deadlinesOFF[1:k-1];deadlinesOFF[k+1:end]]
         elseif caso==5      #take snapshot
-            workloads_snapshot = workloads;
-            deadlinesON_snapshot = deadlinesON;
-            U_snapshot = policy(workloads,deadlinesON,C)*1.0;
-            nextSnapshot = Inf;
+            push!(workloads_snapshot,workloads);
+            push!(deadlinesON_snapshot,deadlinesON);
+            push!(U_snapshot,policy(workloads,deadlinesON,C)*1.0);
+            push!(j_snapshot,j);
+
+            if (m<length(snapshots))
+                m=m+1;
+                nextSnapshot = snapshots[m]-t;
+            else
+                nextSnapshot = Inf;
+            end
+
         end
 
         #update charging rates
@@ -150,6 +160,6 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshot_time)
 
     #rangeX,pX,rangeY,pY,avgX,avgY,avgW = compute_statistics(T,X,Y,W,pD)
     #return EVSim(T,X,Y,W,pD,rangeX,pX,rangeY,pY,avgX,avgY,avgW)
-    return EVSim(T,X,Y,W,pD,workloads_snapshot,deadlinesON_snapshot,U_snapshot)
-
+    #return EVSim(T,X,Y,W,pD,workloads_snapshot,deadlinesON_snapshot,U_snapshot)
+    return EVSim(T,X,Y,W,pD,workloads_snapshot,deadlinesON_snapshot,U_snapshot,j_snapshot)
 end
