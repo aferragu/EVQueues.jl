@@ -10,13 +10,13 @@ data = CSV.read("google_data/Google_Test_Data_filtered.csv",
 sort!(data, [:arriboAbsoluto]);
 
 #filtro 2 dias de autos
-idx = data[:arriboAbsoluto].<(2*86400);
+idx = data[:arriboAbsoluto].<(86400);
 
 arribos = data[idx,:arriboAbsoluto];
 partidas = data[idx,:arriboAbsoluto]+data[idx,:permanencia];
 trabajos = data[idx,:tiempoCarga];
 
-C=50;
+C=30;
 
 #simula usando edf a partir de la traza. Cambiar edf por llf, llr, pf, parallel para las otras politicas.
 sim = ev_llr_trace(arribos,trabajos,partidas,C)

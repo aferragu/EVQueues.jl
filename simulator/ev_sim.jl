@@ -14,7 +14,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
     T=zeros(num);
     X=Array{UInt16}(length(T));   #charging vehicles
     Y=Array{UInt16}(length(T));   #already charged
-    W=zeros(num,3);
+    W=zeros(num,4);
 
     t=0.0;
     x=0;
@@ -75,7 +75,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
             workloads = [workloads[1:k-1];workloads[k+1:end]];
             #anoto la carga relativa
             j=j+1;
-            W[j,:] = [workloadsOrig[k] 0.0 deadlinesOrig[k]];
+            W[j,:] = [workloadsOrig[k] 0.0 deadlinesOrig[k] t];
             workloadsOrig = [workloadsOrig[1:k-1];workloadsOrig[k+1:end]];
             deadlinesOFF = [deadlinesOFF;deadlinesON[k]];
             deadlinesON = [deadlinesON[1:k-1];deadlinesON[k+1:end]]
@@ -86,7 +86,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
             aux,k = findmin(deadlinesON);
             w=workloads[k];
             j=j+1;
-            W[j,:] = [workloadsOrig[k] w deadlinesOrig[k]];
+            W[j,:] = [workloadsOrig[k] w deadlinesOrig[k] t];
             workloads = [workloads[1:k-1];workloads[k+1:end]];
             workloadsOrig = [workloadsOrig[1:k-1];workloadsOrig[k+1:end]];
             deadlinesON = [deadlinesON[1:k-1];deadlinesON[k+1:end]];
