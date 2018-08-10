@@ -4,7 +4,7 @@ module EVQueues
 
 using Distributions, ProgressMeter
 
-export ev_parallel, ev_pf, ev_edf, ev_llf, ev_llr, ev_exact, compute_statistics!, EVSim, ev_parallel_trace, ev_pf_trace, ev_edf_trace, ev_llf_trace, ev_llr_trace, ev_exact_trace
+export ev_parallel, ev_pf, ev_edf, ev_llf, ev_llr, ev_exact, compute_statistics!, EVSim, ev_parallel_trace, ev_pf_trace, ev_edf_trace, ev_llf_trace, ev_llr_trace, ev_exact_trace, loadsim, savesim
 
 #defino la estructura resultados de simulacion
 mutable struct EVSim
@@ -260,6 +260,13 @@ function compute_statistics!(sim::EVSim)
     return nothing
 end
 
+function savesim(sim::EVSim, file::String)
+    serialize(open(file,"w"),sim);
+end
 
+function loadsim(file::String)
+    io=open(file,"r");
+    deserialize(io);
+end
 
 end #end module
