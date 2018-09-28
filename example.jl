@@ -9,10 +9,10 @@ C=80;
 Tfinal=1000.0;
 
 
-sim = ev_llr(lambda,mu,gamma,Tfinal,C)
-compute_statistics!(sim)
+sim = ev_llr(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
+#compute_statistics!(sim)
 
-rW = sim.W[:,2];
-sW=sort(rW[5000:end]);
-k=length(sW);
-PyPlot.plot(sW,(1:k)/k,drawstyle="steps")
+#rW = sim.W[:,2];
+#sW=sort(rW[5000:end]);
+#k=length(sW);
+#PyPlot.plot(sW,(1:k)/k,drawstyle="steps")
