@@ -22,7 +22,7 @@ mutable struct EVinstance
     EVinstance( arrivalTime::Float64,
                 departureTime::Float64,
                 requestedEnergy::Float64,
-                chargingPower::Float64) = new(arrivalTime,departureTime,requestedEnergy,chargingPower,requestedEnergy/chargingPower,departureTime-arrivalTime,0.0,NaN,NaN)
+                chargingPower::Float64) = new(arrivalTime,departureTime,requestedEnergy,chargingPower,requestedEnergy,departureTime-arrivalTime,0.0,NaN,NaN)
 end
 
 
@@ -60,9 +60,8 @@ mutable struct EVSim
 end
 
 include("ev_sim.jl")  ##codigo del simulador comun
-#include("ev_sim_trace.jl") ##codigo del simulador a partir de trazas
-
-include("policies.jl")
+include("ev_sim_trace.jl") ##codigo del simulador a partir de trazas
+include("policies.jl")  ##codigo que implementa las politicas
 
 function update_vehicle(ev::EVinstance,dt::Float64)
 
