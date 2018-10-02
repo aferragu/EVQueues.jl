@@ -101,12 +101,12 @@ function compute_statistics!(sim::EVSim)
     return nothing
 end
 
-function fairness_index(sr,s)
+function fairness_index(sa,s)
 
     J=1.0;
 
-    if length(sr)>0 && sum(sr)>0
-        J = mean(sr./s).^2/(mean((sr./s).^2));
+    if length(sa)>0 && sum(sa)>0
+        J = mean(sa./s).^2/(mean((sa./s).^2));
     end
     return J
 end
@@ -116,10 +116,12 @@ function compute_fairness(sim::EVSim,t::Vector{Float64},h::Float64)
     J=zeros(length(t))
 
     for i=1:length(t)
-        w=sim.W[sim.W[:,4].<=t[i],:];
-        w=w[w[:,4].>=t[i]-h,:];
 
-        J[i] = fairness_index(w[:,1]-w[:,2],w[:,1]);
+        evs = filter(ev->(ev.completionTime<=t[i])&&(ev.completionTime>=t[i]-h),sim.EVs);
+        sa = [ev.requestedEnergy-ev.departureWorkload for ev in evs];
+        s = [ev.requestedEnergy for ev in evs];
+
+        J[i] = fairness_index(sa,s);
 
     end
     return J;
