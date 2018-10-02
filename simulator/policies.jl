@@ -19,8 +19,8 @@ function ev_parallel(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
 end
 
 
-function ev_parallel_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,parallel_policy,C,snapshots)
+function ev_parallel_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,parallel_policy,C,snapshots)
 end
 
 function edf_policy(evs::Array{EVinstance},C::Float64)
@@ -38,7 +38,7 @@ function edf_policy(evs::Array{EVinstance},C::Float64)
         U=zeros(length(evs));
 
         #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<length(evs)
+        while p<C && i<=length(evs)
             alloc = min(evs[perm[i]].chargingPower,C-p);
             p=p+alloc;
             U[perm[i]]=alloc;
@@ -54,8 +54,8 @@ function ev_edf(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
     ev_sim(lambda,mu,gamma,Tfinal,C,edf_policy,snapshots)
 end
 
-function ev_edf_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,edf_policy,C,snapshots)
+function ev_edf_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,edf_policy,C,snapshots)
 end
 
 function llf_policy(evs::Array{EVinstance},C::Float64)
@@ -72,7 +72,7 @@ function llf_policy(evs::Array{EVinstance},C::Float64)
         U=zeros(length(evs));
 
         #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<length(evs)
+        while p<C && i<=length(evs)
             alloc = min(evs[perm[i]].chargingPower,C-p);
             p=p+alloc;
             U[perm[i]]=alloc;
@@ -87,8 +87,8 @@ function ev_llf(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
     ev_sim(lambda,mu,gamma,Tfinal,C,llf_policy,snapshots)
 end
 
-function ev_llf_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,llf_policy,C,snapshots)
+function ev_llf_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,llf_policy,C,snapshots)
 end
 
 function llr_policy(evs::Array{EVinstance},C::Float64)
@@ -105,7 +105,7 @@ function llr_policy(evs::Array{EVinstance},C::Float64)
         U=zeros(length(evs));
 
         #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<length(evs)
+        while p<C && i<=length(evs)
             alloc = min(evs[perm[i]].chargingPower,C-p);
             p=p+alloc;
             U[perm[i]]=alloc;
@@ -121,8 +121,8 @@ function ev_llr(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
 end
 
 
-function ev_llr_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,llr_policy,C,snapshots)
+function ev_llr_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,llr_policy,C,snapshots)
 end
 
 function pf_policy(evs::Array{EVinstance},C::Float64)
@@ -173,8 +173,8 @@ function ev_pf(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
     ev_sim(lambda,mu,gamma,Tfinal,C,pf_policy,snapshots)
 end
 
-function ev_pf_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,pf_policy,C,snapshots)
+function ev_pf_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,pf_policy,C,snapshots)
 end
 
 function exact_policy(workloads,deadlinesON,C)
@@ -210,6 +210,6 @@ function ev_exact(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
     ev_sim(lambda,mu,gamma,Tfinal,C,exact_policy,snapshots)
 end
 
-function ev_exact_trace(arribos,demandas,salidas,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,exact_policy,C,snapshots)
+function ev_exact_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,exact_policy,C,snapshots)
 end
