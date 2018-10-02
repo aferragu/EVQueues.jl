@@ -129,7 +129,9 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
         end
 
         powerAllocation = policy(charging,C);
-        [charging[i].currentPower=powerAllocation[i] for i=1:length(charging)]
+        for i=1:length(charging)
+            charging[i].currentPower=powerAllocation[i]
+        end
         p = sum(powerAllocation);
 
         if x>0
