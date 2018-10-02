@@ -8,63 +8,72 @@ salidas: lista de tiempos de salida
 C: no. de cargadores simultaneos.
 policy: una de las politicas definidas en EVSim
 =#
-function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshots)
+function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots)
 
     num = length(arribos); #no. de vehiculos a procesar.
-    prog=Progress(num+1, dt=0.5, desc="Simulando... ");
+    prog = Progress(num+1, dt=0.5, desc="Simulando... ");
 
     eventos = 3*num+1+length(snapshots);
+
+
+    #guardo parametros
+    params = Dict(
+        "TotalArrivals" => length(arribos),
+        "AvgEnergy" => mean(demandas),
+        "AvgDeadline" => mean(salidas-arribos),
+        "SimTime" => salidas[end],
+        "Capacity" => C,
+        "Policy" => policy,
+        "SnapshotTimes" => snapshots
+    )
 
     #valores iniciales
     T=zeros(eventos);
     X=Array{UInt16}(length(T));   #charging vehicles
     Y=Array{UInt16}(length(T));   #already charged
-    W=zeros(num,4);               #estadisticas de cada vehiculo
+    P=Array{Float64}(length(T));   #used power
+
+    snaps = Array{Snapshot}(0);
 
     t=0.0;
     x=0;
     y=0;
+    p=0.0;
 
     T[1]=t;
     X[1]=x;
     Y[1]=y;
+    P[1]=p;
+
     i=1;    #event counter
-    j=0;    #finished job counter
     m=1;    #snapshot counter
 
-    workloads = Array{Float64}(0);
-    workloadsOrig = Array{Float64}(0);
-    deadlinesOrig = Array{Float64}(0);
-    U = Array{Float64}(0); #charging rates 0<=U<=1
-    deadlinesON = Array{Float64}(0);
-    deadlinesOFF = Array{Float64}(0);
+    charging = Array{EVinstance}(0);
+    alreadyCharged = Array{EVinstance}(0);
+    finished = Array{EVinstance}(0);
+
+    powerAllocation = Array{Float64}(0);
+
     arrivals=0;
     expired=0;
-
-    #inicializo snapshots para que si no hay ninguno igual se cree.
-    workloads_snapshot = Array{Array{Float64}}(0);
-    deadlinesON_snapshot = Array{Array{Float64}}(0);
-    U_snapshot = Array{Union{Float64,Vector{Float64}}}(0);
-    j_snapshot =  Array{Int64}(0);
 
     nextArr = arribos[arrivals+1]-t; #inicializo al primer arribo
     nextCharge = Inf;
     nextDepON = Inf;
     nextDepOFF = Inf;
-
-    nextSnapshot = snapshots[m]; #tiempo al cual hacer snapshot del estado
+    nextSnapshot = snapshots[m];
 
     dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
     while dt<Inf
 
         t=t+dt;
-        nextArr=nextArr-dt
+        nextArr=nextArr-dt;
         nextSnapshot = nextSnapshot - dt;
 
-        workloads = workloads - U*dt;
-        deadlinesON = deadlinesON - dt;
-        deadlinesOFF = deadlinesOFF - dt;
+        map(v->update_vehicle(v,dt),charging);
+        map(v->update_vehicle(v,dt),alreadyCharged);
+
 
         if caso==1          #arribo
             arrivals=arrivals+1;
@@ -75,43 +84,49 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshots)
             end
 
             x=x+1;
-            workloads = [workloads;demandas[arrivals]];
-            workloadsOrig = [workloadsOrig;workloads[end]];
-            deadlinesON = [deadlinesON;salidas[arrivals]-t];
-            deadlinesOrig = [deadlinesOrig;deadlinesON[end]];
+
+            push!(charging,EVinstance(t,salidas[arrivals],demandas[arrivals],potencias[arrivals]));
 
         elseif caso==2      #charge completed
             x=x-1;
             y=y+1;
-            aux,k = findmin(workloads)
-            workloads = [workloads[1:k-1];workloads[k+1:end]];
-            #anoto la carga relativa
-            j=j+1;
-            W[j,:] = [workloadsOrig[k] 0.0 deadlinesOrig[k] t];
-            workloadsOrig = [workloadsOrig[1:k-1];workloadsOrig[k+1:end]];
-            deadlinesOFF = [deadlinesOFF;deadlinesON[k]];
-            deadlinesON = [deadlinesON[1:k-1];deadlinesON[k+1:end]]
-            deadlinesOrig = [deadlinesOrig[1:k-1];deadlinesOrig[k+1:end]];
+
+            #guardo el auto que termina
+            aux,k = findmin([ev.currentWorkload for ev in charging]); ##TODO agregar un assert de que aux==0?
+            ev = charging[k];
+
+            push!(finished,ev);
+            push!(alreadyCharged,ev);
+            deleteat!(charging,k)
+
+            ev.currentPower=0.0;
+            ev.departureWorkload=0.0;
+            ev.completionTime=t;
+
         elseif caso==3      #departure without full charge
             expired=expired+1;
             x=x-1;
-            aux,k = findmin(deadlinesON);
-            w=workloads[k];
-            j=j+1;
-            W[j,:] = [workloadsOrig[k] w deadlinesOrig[k] t];
-            workloads = [workloads[1:k-1];workloads[k+1:end]];
-            workloadsOrig = [workloadsOrig[1:k-1];workloadsOrig[k+1:end]];
-            deadlinesON = [deadlinesON[1:k-1];deadlinesON[k+1:end]];
-            deadlinesOrig = [deadlinesOrig[1:k-1];deadlinesOrig[k+1:end]];
+
+            #guardo el auto que termina
+            aux,k = findmin([ev.currentDeadline for ev in charging]);
+            ev=charging[k];
+
+            push!(finished,ev);
+            deleteat!(charging,k)
+
+            ev.currentPower=0.0;
+            ev.departureWorkload = ev.currentWorkload;
+            ev.completionTime=t;
+
         elseif caso==4      #departure after full charge
             y=y-1;
-            aux,k = findmin(deadlinesOFF);
-            deadlinesOFF = [deadlinesOFF[1:k-1];deadlinesOFF[k+1:end]]
+            aux,k = findmin([ev.currentDeadline for ev in alreadyCharged]);
+            deleteat!(alreadyCharged,k);
+
         elseif caso==5      #take snapshot
-            push!(workloads_snapshot,workloads);
-            push!(deadlinesON_snapshot,deadlinesON);
-            push!(U_snapshot,policy(workloads,deadlinesON,C)*1.0);
-            push!(j_snapshot,j);
+
+            snapshot=Snapshot(t,charging,alreadyCharged);
+            push!(snaps,snapshot);
 
             if (m<length(snapshots))
                 m=m+1;
@@ -122,19 +137,24 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshots)
 
         end
 
-        #update charging rates
-        U = policy(workloads,deadlinesON,C);
+        powerAllocation = policy(charging,C);
+
+        for j=1:length(charging)
+            charging[j].currentPower=powerAllocation[j]
+        end
+        p = sum(powerAllocation);
 
         if x>0
-            nextCharge = minimum(workloads./U);
-            nextDepON = minimum(deadlinesON);
+
+            nextCharge = minimum([ev.currentWorkload/ev.currentPower for ev in charging]);
+            nextDepON = minimum([ev.currentDeadline for ev in charging]);
         else
             nextCharge = Inf;
             nextDepON = Inf;
         end
 
         if y>0
-            nextDepOFF = minimum(deadlinesOFF);
+            nextDepOFF = minimum([ev.currentDeadline for ev in alreadyCharged]);
         else
             nextDepOFF = Inf;
         end
@@ -143,23 +163,23 @@ function ev_sim_trace(arribos,demandas,salidas,policy,C,snapshots)
         T[i]=t;
         X[i]=x;
         Y[i]=y;
+        P[i]=p;
 
         dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
         update!(prog,arrivals);
+
     end
 
     T=T[1:i];
     X=X[1:i];
     Y=Y[1:i];
-    W=W[1:j,:];
+    P=P[1:i];
 
     pD=expired/arrivals;
-
     next!(prog);
 
-    #rangeX,pX,rangeY,pY,avgX,avgY,avgW = compute_statistics(T,X,Y,W,pD)
-    #return EVSim(T,X,Y,W,pD,rangeX,pX,rangeY,pY,avgX,avgY,avgW)
-    #return EVSim(T,X,Y,W,pD,workloads_snapshot,deadlinesON_snapshot,U_snapshot)
-    return EVSim(T,X,Y,W,pD,workloads_snapshot,deadlinesON_snapshot,U_snapshot,j_snapshot)
+    trace = TimeTrace(T,X,Y,P);
+    stats = SimStatistics([],[],[],[],NaN,NaN,NaN,NaN);
+    return EVSim(params,trace,finished,snaps,stats)
 end
