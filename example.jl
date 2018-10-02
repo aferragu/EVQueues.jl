@@ -4,12 +4,12 @@ using EVQueues, PyPlot
 lambda=120.0;
 mu=1.0;
 gamma=0.5;
-C=80;
+C=80.0;
 
 Tfinal=1000.0;
 
 
-sim = ev_llr(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
+sim = ev_llf(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
 #compute_statistics!(sim)
 
 #rW = sim.W[:,2];

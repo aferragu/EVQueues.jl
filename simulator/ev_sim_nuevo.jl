@@ -128,19 +128,14 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
 
         end
 
-        workloads = [ev.currentWorkload for ev in charging]
-        deadlines = [ev.currentDeadline for ev in charging]
-
-        powerAllocation = policy(workloads,deadlines,C);
+        powerAllocation = policy(charging,C);
+        [charging[i].currentPower=powerAllocation[i] for i=1:length(charging)]
         p = sum(powerAllocation);
 
         if x>0
-            for l=1:x
-                charging[l].currentPower = powerAllocation[l];
-            end
 
-            nextCharge = minimum(workloads./powerAllocation);
-            nextDepON = minimum(deadlines);
+            nextCharge = minimum([ev.currentWorkload/ev.currentPower for ev in charging]);
+            nextDepON = minimum([ev.currentDeadline for ev in charging]);
         else
             nextCharge = Inf;
             nextDepON = Inf;
