@@ -59,7 +59,7 @@ mutable struct EVSim
     stats::SimStatistics
 end
 
-include("ev_sim_nuevo.jl")  ##codigo del simulador comun
+include("ev_sim.jl")  ##codigo del simulador comun
 #include("ev_sim_trace.jl") ##codigo del simulador a partir de trazas
 
 include("policies.jl")
