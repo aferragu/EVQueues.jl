@@ -171,6 +171,6 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
     next!(prog);
 
     trace = TimeTrace(T,X,Y,P);
-    stats = SimStatistics([],[],[],[],0.0,0.0,pD,0.0);
+    stats = SimStatistics([],[],[],[],NaN,NaN,NaN,NaN);
     return EVSim(params,trace,finished,snaps,stats)
 end

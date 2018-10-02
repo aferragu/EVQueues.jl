@@ -76,23 +76,28 @@ function compute_average(f,T::Vector{Float64},X::Vector{UInt16})
 end
 
 function compute_statistics!(sim::EVSim)
-    sim.avgX = compute_average(x->x,sim.T,sim.X);
-    sim.avgY = compute_average(x->x,sim.T,sim.Y);
-    #sim.avgW = sim.pD*mean(sim.W[:,2]);
-    k=Int64(round(0.2*length(sim.W[:,2])));
-    sim.avgW = mean(sim.W[k:end,2]);  #el pD no va porque ahora guardo todos los workloads remanentes.
+    sim.stats.avgX = compute_average(x->x,sim.timetrace.T,sim.timetrace.X);
+    sim.stats.avgY = compute_average(x->x,sim.timetrace.T,sim.timetrace.Y);
 
-    sim.rangeX = collect(minimum(sim.X):maximum(sim.X))
-    sim.pX=zeros(length(sim.rangeX));
-    for i=1:length(sim.rangeX)
-        sim.pX[i] = compute_average(x->x.==sim.rangeX[i],sim.T,sim.X);
-    end
+    sim.stats.avgW = mean([ev.departureWorkload for ev in sim.EVs]);
 
-    sim.rangeY = collect(minimum(sim.Y):maximum(sim.Y))
-    sim.pY=zeros(length(sim.rangeY));
-    for i=1:length(sim.rangeY)
-        sim.pY[i] = compute_average(x->x.==sim.rangeY[i],sim.T,sim.Y);
+    rangeX = collect(minimum(sim.timetrace.X):maximum(sim.timetrace.X))
+    pX=zeros(length(sim.stats.rangeX));
+    for i=1:length(pX)
+        pX[i] = compute_average(x->x.==rangeX[i],sim.timetrace.T,sim.timetrace.X);
     end
+    sim.stats.rangeX = rangeX;
+    sim.stats.pX=pX;
+
+    rangeY = collect(minimum(sim.timetrace.Y):maximum(sim.timetrace.Y))
+    pY=zeros(length(sim.stats.rangeY));
+    for i=1:length(pY)
+        pY[i] = compute_average(x->x.==rangeY[i],sim.timetrace.T,sim.timetrace.Y);
+    end
+    sim.stats.rangeY = rangeY;
+    sim.stats.pY=pY;
+
+    sim.stats.pD = sum([ev.departureWorkload>0 for ev in sim.EVs])/length(sim.EVs);
 
     return nothing
 end
