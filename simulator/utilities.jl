@@ -16,18 +16,12 @@ function compute_statistics!(sim::EVSim)
     sim.stats.avgW = mean([ev.departureWorkload for ev in sim.EVs]);
 
     rangeX = collect(minimum(sim.timetrace.X):maximum(sim.timetrace.X))
-    pX=zeros(length(sim.stats.rangeX));
-    for i=1:length(pX)
-        pX[i] = compute_average(x->x.==rangeX[i],sim.timetrace.T,sim.timetrace.X);
-    end
+    pX = [compute_average(x->x.==l,sim.timetrace.T,sim.timetrace.X) for l in rangeX]
     sim.stats.rangeX = rangeX;
     sim.stats.pX=pX;
 
     rangeY = collect(minimum(sim.timetrace.Y):maximum(sim.timetrace.Y))
-    pY=zeros(length(sim.stats.rangeY));
-    for i=1:length(pY)
-        pY[i] = compute_average(x->x.==rangeY[i],sim.timetrace.T,sim.timetrace.Y);
-    end
+    pY = [compute_average(x->x.==l,sim.timetrace.T,sim.timetrace.Y) for l in rangeY]
     sim.stats.rangeY = rangeY;
     sim.stats.pY=pY;
 
