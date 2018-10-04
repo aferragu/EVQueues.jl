@@ -18,19 +18,19 @@ p1 = plot(  xlabel="Time",
             ylabel="# vehicles",
             title="Vehicles in charge")
 
-plot!(p1, sim.timetrace.T, sim.timetrace.X,linewidth=2,legend=:none);
+plot!(p1, sim.timetrace.T, sim.timetrace.X,lt=:steppost,linewidth=2,legend=:none);
 
 p2 = plot(  xlabel="Time",
             ylabel="# vehicles",
             title="Vehicles already charged")
 
-plot!(p2, sim.timetrace.T, sim.timetrace.Y,linewidth=2,legend=:none);
+plot!(p2, sim.timetrace.T, sim.timetrace.Y,lt=:steppost,linewidth=2,legend=:none);
 
 p3 = plot(  xlabel="Time",
             ylabel="P (kW)",
             title="Consumed power")
 
-plot!(p3, sim.timetrace.T, sim.timetrace.P,linewidth=2,legend=:none);
+plot!(p3, sim.timetrace.T, sim.timetrace.P,lt=:steppost,linewidth=2,legend=:none);
 
 l=@layout [a;b;c];
 p=plot(p1,p2,p3,layout=l)

@@ -116,7 +116,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
 
         elseif caso==5      #take snapshot
 
-            snapshot=Snapshot(t,charging,alreadyCharged);
+            snapshot=Snapshot(t,deepcopy(charging),deepcopy(alreadyCharged));
             push!(snaps,snapshot);
 
             if (m<length(snapshots))

@@ -1,10 +1,10 @@
 push!(LOAD_PATH,"simulator")
-using EVQueues, PyPlot
+using EVQueues, Plots
 
 #tiempos de llegada. Debe estar ordenado.
 arribos = [1.0;2.0;3.0];
 #tiempos de partidas, correlativo al de arribos.
-partidas = [12.0;13.0;14.0];
+salidas = [12.0;13.0;14.0];
 #tiempos de trabajo, correlativo al de arribos.
 trabajos = [4.0;5.0;6.0];
 #potencias
@@ -13,11 +13,60 @@ potencias = [1.0;1.0;1.0];
 C=1.0;
 
 #simula usando edf a partir de la traza. Cambiar edf por llf, llr, pf, parallel para las otras politicas.
-sim = ev_edf_trace(arribos,trabajos,partidas,potencias,C,snapshots=[1.5])
+sim = ev_edf_trace(arribos,trabajos,salidas,potencias,C,snapshots=[4.0])
 compute_statistics!(sim)
 
-#Ploteo la salida como escalera. where=post es para que se mantenga constante a la derecha del intervalo.
-#sim.X tiene los vehiculos cargando.
-#sim.Y tiene los vehiculos finalizados.
-PyPlot.step(sim.timetrace.T,sim.timetrace.X,where="post")
-PyPlot.step(sim.timetrace.T,sim.timetrace.Y,where="post")
+
+#TIme plot of occupation and power
+p1 = plot(  xlabel="Time",
+            ylabel="# vehicles",
+            title="Vehicles in charge")
+
+plot!(p1, sim.timetrace.T, sim.timetrace.X,linewidth=2,lt=:steppost,legend=:none);
+
+p2 = plot(  xlabel="Time",
+            ylabel="# vehicles",
+            title="Vehicles already charged")
+
+plot!(p2, sim.timetrace.T, sim.timetrace.Y,linewidth=2,lt=:steppost,legend=:none);
+
+p3 = plot(  xlabel="Time",
+            ylabel="P (kW)",
+            title="Consumed power")
+
+plot!(p3, sim.timetrace.T, sim.timetrace.P,linewidth=2,lt=:steppost,legend=:none);
+
+l=@layout [a;b;c];
+p=plot(p1,p2,p3,layout=l)
+display(p)
+
+#CDF of departure attained workloads
+
+Sa = sort([ev.departureWorkload for ev in sim.EVs]);
+n = length(Sa);
+p = plot(   xlabel="w (kWh)",
+            ylabel="P(Sa⩽w)",
+            title="Attained work CDF"
+            )
+
+plot!(p,Sa,(1:n)/n,lt=:steppost,legend=:none)
+display(p)
+
+#State space of the last snapshot
+snap = sim.snapshots[end];
+
+w = [ev.currentWorkload for ev in snap.charging];
+d = [ev.currentDeadline for ev in snap.charging];
+on = [ev.currentPower>0 for ev in snap.charging];
+
+p = plot(   xlabel = "Remaining workload",
+            ylabel = "Remaining soj. time",
+            title = "State-space snapshot",
+            xlims = (0,3*sim.parameters["AvgEnergy"]),
+            ylims = (0,3*sim.parameters["AvgDeadline"])
+            )
+
+scatter!(p,w[on.==true],d[on.==true],markershape=:circle,markersize=4,color=:blue,label="In service")
+scatter!(p,w[on.==false],d[on.==false],markershape=:circle,markersize=4,color=:red,label="Not in service")
+
+display(p)

@@ -125,7 +125,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots)
 
         elseif caso==5      #take snapshot
 
-            snapshot=Snapshot(t,charging,alreadyCharged);
+            snapshot=Snapshot(t,deepcopy(charging),deepcopy(alreadyCharged));
             push!(snaps,snapshot);
 
             if (m<length(snapshots))
