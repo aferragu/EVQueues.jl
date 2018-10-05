@@ -28,7 +28,9 @@ function fairness_plot(i)
                 xlabel="Time",
                 ylabel="J",
                 title="Fairness index",
-                legendfont = Plots.Font("sans-serif",10,:hcenter,:vcenter,0.0,RGB{U8}(0.0,0.0,0.0)));
+                legendfont = Plots.Font("sans-serif",10,:hcenter,:vcenter,0.0,RGB{U8}(0.0,0.0,0.0))
+                legend = :botomright
+                );
 
     Jedf=compute_fairness(sim_edf,t,1800.0);
     Jllf=compute_fairness(sim_llf,t,1800.0);
