@@ -3,7 +3,7 @@ function parallel_policy(evs::Array{EVinstance},C::Float64)
 
     if length(evs)==0
         #nothing to do, return empty array for consistence
-        U=Array{Float64}(0);
+        U=Array{Float64}(undef,0);
     else
 
         totPower=sum([ev.chargingPower for ev in evs]);
@@ -28,7 +28,7 @@ function edf_policy(evs::Array{EVinstance},C::Float64)
 
     if length(evs)==0
         #nothing to do, return empty array for consistence
-        U=Array{Float64}(0);
+        U=Array{Float64}(undef,0);
     else
         deadlines = [ev.currentDeadline for ev in evs];
         perm = sortperm(deadlines);
@@ -62,7 +62,7 @@ function llf_policy(evs::Array{EVinstance},C::Float64)
 
     if length(evs)==0
         #nothing to do, return empty array for consistence
-        U=Array{Float64}(0);
+        U=Array{Float64}(undef,0);
     else
         laxities = [ev.currentDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
         perm = sortperm(laxities);
@@ -95,7 +95,7 @@ function llr_policy(evs::Array{EVinstance},C::Float64)
 
     if length(evs)==0
         #nothing to do, return empty array for consistence
-        U=Array{Float64}(0);
+        U=Array{Float64}(undef,0);
     else
         relative_laxities = [ev.currentDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
         perm = sortperm(relative_laxities);
@@ -129,7 +129,7 @@ function pf_policy(evs::Array{EVinstance},C::Float64)
 
     if length(evs)==0
         #nothing to do, return empty array for consistence
-        U=Array{Float64}(0);
+        U=Array{Float64}(undef,0);
     else
         ##TODO Compute pf bien
         workloads = [ev.currentWorkload for ev in evs];

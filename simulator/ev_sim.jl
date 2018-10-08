@@ -20,13 +20,13 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
     deadline_rng=Exponential(1.0/gamma);
 
     #valores iniciales
-    num=round(3.3*lambda*Tfinal);
+    num=convert(Integer,round(3.3*lambda*Tfinal));
     T=zeros(num);
-    X=Array{UInt16}(length(T));   #charging vehicles
-    Y=Array{UInt16}(length(T));   #already charged
-    P=Array{Float64}(length(T));   #used power
+    X=zeros(UInt16,length(T));   #charging vehicles
+    Y=zeros(UInt16,length(T));   #already charged
+    P=zeros(Float64,length(T));   #used power
 
-    snaps = Array{Snapshot}(0);
+    snaps = Array{Snapshot}(undef,0);
 
     t=0.0;
     x=0;
@@ -41,11 +41,11 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
     i=1;    #event counter
     m=1;    #snapshot counter
 
-    charging = Array{EVinstance}(0);
-    alreadyCharged = Array{EVinstance}(0);
-    finished = Array{EVinstance}(0);
+    charging = Array{EVinstance}(undef,0);
+    alreadyCharged = Array{EVinstance}(undef,0);
+    finished = Array{EVinstance}(undef,0);
 
-    powerAllocation = Array{Float64}(0);
+    powerAllocation = Array{Float64}(undef,0);
 
     arrivals=0;
     expired=0;

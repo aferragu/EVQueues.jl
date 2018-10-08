@@ -29,11 +29,11 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots)
 
     #valores iniciales
     T=zeros(eventos);
-    X=Array{UInt16}(length(T));   #charging vehicles
-    Y=Array{UInt16}(length(T));   #already charged
-    P=Array{Float64}(length(T));   #used power
+    X=zeros(UInt16,length(T));   #charging vehicles
+    Y=zeros(UInt16,length(T));   #already charged
+    P=zeros(Float64,length(T));   #used power
 
-    snaps = Array{Snapshot}(0);
+    snaps = Array{Snapshot}(undef,0);
 
     t=0.0;
     x=0;
@@ -48,11 +48,11 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots)
     i=1;    #event counter
     m=1;    #snapshot counter
 
-    charging = Array{EVinstance}(0);
-    alreadyCharged = Array{EVinstance}(0);
-    finished = Array{EVinstance}(0);
+    charging = Array{EVinstance}(undef,0);
+    alreadyCharged = Array{EVinstance}(undef,0);
+    finished = Array{EVinstance}(undef,0);
 
-    powerAllocation = Array{Float64}(0);
+    powerAllocation = Array{Float64}(undef,0);
 
     arrivals=0;
     expired=0;
