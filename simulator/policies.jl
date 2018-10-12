@@ -177,33 +177,26 @@ function ev_pf_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
     ev_sim_trace(arribos,demandas,salidas,potencias,pf_policy,C,snapshots)
 end
 
-function exact_policy(workloads,deadlinesON,C)
+function exact_policy(evs::Array{EVinstance},C::Float64)
 
-    x=length(workloads);
-    if C==Inf
-        if x>0
-            U=workloads./deadlinesON;
-        else
-            U=0;
-        end
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
     else
-        if x>0
-            U=zeros(workloads);
-            perm=sortperm(deadlinesON./workloads);
-            p=0;
-            i=1;
-            for i=1:x
-                allocation = min(workloads[perm[i]]/deadlinesON[perm[i]],1);
-                allocation = min(C-p,allocation);
-                U[perm[i]]=allocation;
-                i=i+1;
-                p=p+allocation;
-            end
-        else
-            U=0;
+        #exact scheduling o potencia maxima
+        U = [min(ev.currentWorkload/ev.currentDeadline,ev.chargingPower) for ev in evs];
+
+        #curtailing si me paso de C
+        if sum(U)>C
+            U = C/sum(U)*U;
+
+            #otra posibilidad es ordernar por rate y asignar hasta C
         end
+
     end
     return U;
+
 end
 
 function ev_exact(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
