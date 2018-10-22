@@ -20,7 +20,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
     deadline_rng=Exponential(1.0/gamma);
 
     #valores iniciales
-    num=convert(Integer,round(3.3*lambda*Tfinal));
+    num=convert(Integer,round(3.3*lambda*Tfinal)+length(snapshots));
     T=zeros(num);
     X=zeros(UInt16,length(T));   #charging vehicles
     Y=zeros(UInt16,length(T));   #already charged
