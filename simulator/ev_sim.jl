@@ -136,7 +136,12 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
 
         if x>0
 
-            nextCharge = minimum([ev.currentWorkload/ev.currentPower for ev in charging]);
+            if minimum([ev.currentWorkload for ev in charging])==0
+                nextCharge=0;
+            else
+                nextCharge = minimum([ev.currentWorkload/ev.currentPower for ev in charging]);
+            end
+            
             nextDepON = minimum([ev.currentDeadline for ev in charging]);
         else
             nextCharge = Inf;

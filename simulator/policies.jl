@@ -206,3 +206,53 @@ end
 function ev_exact_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
     ev_sim_trace(arribos,demandas,salidas,potencias,exact_policy,C,snapshots)
 end
+
+using JuMP, Gurobi, LinearAlgebra
+
+function peak_policy(evs::Array{EVinstance},C::Float64)
+
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+        U=zeros(length(evs));
+
+        idx = sortperm([ev.currentDeadline for ev in evs]);
+
+        sigma = [ev.currentWorkload for ev in evs][idx];
+        tau = [ev.currentDeadline for ev in evs][idx];
+        deltat=diff([0;tau]);
+        p = [ev.chargingPower for ev in evs][idx];
+        n=length(evs);
+
+        m=Model(solver=GurobiSolver(OutputFlag=0))
+
+        @variable(m,x[1:n,1:n]>=0)
+        @variable(m,auxvar)
+
+        @constraint(m,[i=1:n,j=i+1:n],x[i,j]==0)
+
+        @constraint(m,[i=1:n,j=1:i],x[i,j]<=p[i])
+        @constraint(m,sum(x*Diagonal(deltat),dims=2).==sigma)
+        @constraint(m,sum(x,dims=1).<=auxvar)
+
+        @objective(m,Min,auxvar)
+
+        solve(m)
+
+        U[idx] = max.(getvalue(x)[:,1],0.0);
+
+
+    end
+    return U;
+
+end
+
+function ev_peak(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,peak_policy,snapshots)
+end
+
+function ev_peak_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,peak_policy,C,snapshots)
+end
