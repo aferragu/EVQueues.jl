@@ -1,26 +1,27 @@
 push!(LOAD_PATH,"simulator")
 using EVQueues, PGFPlots
 
-lambda=50.0;
+lambda=120.0;
 mu=1.0;
-gamma=1/3;
+gamma=0.5;
 #C=80.0;
-C=Inf;
+C=60.0;
 
-Tfinal=24.0;
+Tfinal=100.0;
 
 
-sim = ev_exact(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
-compute_statistics!(sim)
+edf = ev_edf(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
+llf = ev_llf(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
+llr = ev_llr(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
 
-t=sim.timetrace.T;
-x=sim.timetrace.X;
-y=sim.timetrace.Y;
-p=sim.timetrace.P;
+#compute_statistics!(sim)
 
-fig = Axis([    Plots.Linear(t[1:10:end],p[1:10:end], style="solid,mark=none,thick,verdecito!50!white"),
+fig = Axis([
+                Plots.Linear([ev.requestedEnergy for ev in edf.EVs][6000:10:end],[ev.requestedEnergy-ev.departureWorkload for ev in edf.EVs][6000:10:end], style="solid,only marks=true,blue", legendentry="EDF"),
+                Plots.Linear([ev.requestedEnergy for ev in llf.EVs][6000:10:end],[ev.requestedEnergy-ev.departureWorkload for ev in llf.EVs][6000:10:end], style="solid,only marks=true,red", legendentry="LLF"),
+                Plots.Linear([ev.requestedEnergy for ev in llr.EVs][6000:10:end],[ev.requestedEnergy-ev.departureWorkload for ev in llr.EVs][6000:10:end], style="solid,only marks=true,green", legendentry="LLR"),
            ],
-           legendPos="south east", xlabel="Tiempo", ylabel="\\# Cargadores activos (potencia)", xmin=0, xmax=24, ymin=0,ymax=75, width="\\columnwidth"
+           legendPos="north west", xlabel="Requested Service (\$S\$)", ylabel="Attained Service (\$S_r\$)", xmin=0, xmax=3, ymin=0, ymax=3, width="0.7\\columnwidth", height="0.4\\columnwidth"
     );
 
-save("/home/andres/Documentos/Charlas/cugre18/figuras/exact_scheduling.tex",fig,include_preamble=false)
+save("/home/andres/Escritorio/sigma_compare.tex",fig,include_preamble=false)
