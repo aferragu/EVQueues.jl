@@ -66,12 +66,15 @@ include("utilities.jl") ##codigo con utilidades varias
 
 
 function savesim(sim::EVSim, file::String)
-    serialize(open(file,"w"),sim);
+    io=open(file,"w");
+    serialize(io,sim);
+    close(io);
 end
 
 function loadsim(file::String)
     io=open(file,"r");
     deserialize(io);
+    close(io);
 end
 
 end #end module
