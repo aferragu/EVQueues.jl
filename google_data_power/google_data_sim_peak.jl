@@ -24,7 +24,7 @@ C=Inf;
 
 sim = ev_peak_trace(arribos,trabajos,partidas,potencias,C)
 
-#using Plots
+using Plots
 
-#p = plot(sim.timetrace.T/3600,sim.timetrace.P)
-#display(p)
+p = plot(sim.timetrace.T/3600,sim.timetrace.P)
+display(p)
