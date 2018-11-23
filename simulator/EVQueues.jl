@@ -73,8 +73,9 @@ end
 
 function loadsim(file::String)
     io=open(file,"r");
-    deserialize(io);
+    sim::EVSim = deserialize(io);
     close(io);
+    return sim;
 end
 
 end #end module
