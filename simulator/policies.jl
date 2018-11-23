@@ -223,7 +223,7 @@ function peak_policy(evs::Array{EVinstance},C::Float64)
         sigma = [ev.currentWorkload for ev in evs][idx];
         tau = [ev.currentDeadline for ev in evs][idx];
         deltat=diff([0;tau]);
-        p = [ev.chargingPower for ev in evs][idx];
+        power = [ev.chargingPower for ev in evs][idx];
         n=length(evs);
 
         m=Model(solver=GurobiSolver(OutputFlag=0))
@@ -233,8 +233,8 @@ function peak_policy(evs::Array{EVinstance},C::Float64)
 
         @constraint(m,[i=1:n,j=i+1:n],x[i,j]==0)
 
-        @constraint(m,[i=1:n,j=1:i],x[i,j]<=p[i])
-        @constraint(m,sum(x*Diagonal(deltat),dims=2).==sigma)
+        @constraint(m,[i=1:n,j=1:i],x[i,j]<=power[i])
+        @constraint(m,[i=1:n],sum(x[i,:].*deltat)==sigma[i])
         @constraint(m,sum(x,dims=1).<=auxvar)
 
         @objective(m,Min,auxvar)
