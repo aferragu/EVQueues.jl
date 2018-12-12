@@ -207,7 +207,7 @@ function ev_exact_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf]
     ev_sim_trace(arribos,demandas,salidas,potencias,exact_policy,C,snapshots)
 end
 
-using JuMP, Gurobi, LinearAlgebra
+using JuMP, Gurobi
 
 function peak_policy(evs::Array{EVinstance},C::Float64)
 
