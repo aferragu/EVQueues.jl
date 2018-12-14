@@ -285,3 +285,33 @@ end
 function ev_fifo_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
     ev_sim_trace(arribos,demandas,salidas,potencias,fifo_policy,C,snapshots)
 end
+
+
+function lifo_policy(evs::Array{EVinstance},C::Float64)
+
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+        p=0.0;
+        i=length(evs);
+        U=zeros(length(evs));
+        while p<C && i>=1
+            alloc = min(evs[i].chargingPower,C-p);
+            p=p+alloc;
+            U[i]=alloc;
+            i=i-1;
+        end
+    end
+    return U;
+
+end
+
+function ev_lifo(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,lifo_policy,snapshots)
+end
+
+function ev_lifo_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,lifo_policy,C,snapshots)
+end

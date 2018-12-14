@@ -4,8 +4,8 @@ module EVQueues
 
 using ProgressMeter, Distributions, Serialization
 
-export  ev_parallel, ev_pf, ev_edf, ev_llf, ev_llr, ev_exact, ev_peak, ev_fifo,
-        ev_parallel_trace, ev_pf_trace, ev_edf_trace, ev_llf_trace, ev_llr_trace, ev_exact_trace, ev_peak_trace, ev_fifo_trace,
+export  ev_parallel, ev_pf, ev_edf, ev_llf, ev_llr, ev_exact, ev_peak, ev_fifo, ev_lifo,
+        ev_parallel_trace, ev_pf_trace, ev_edf_trace, ev_llf_trace, ev_llr_trace, ev_exact_trace, ev_peak_trace, ev_fifo_trace, ev_lifo_trace,
         compute_statistics!, compute_fairness,
         EVSim, loadsim, savesim
 
