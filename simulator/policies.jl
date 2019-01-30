@@ -315,3 +315,105 @@ end
 function ev_lifo_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
     ev_sim_trace(arribos,demandas,salidas,potencias,lifo_policy,C,snapshots)
 end
+
+function lar_policy(evs::Array{EVinstance},C::Float64)
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+        relative_attained = [(ev.departureTime-ev.arrivalTime-ev.currentDeadline)*ev.chargingPower/ev.currentWorkload for ev in evs];
+        perm = sortperm(relative_attained,rev=true);
+
+        p=0.0;
+        i=1;
+        U=zeros(length(evs));
+
+        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
+        while p<C && i<=length(evs)
+            alloc = min(evs[perm[i]].chargingPower,C-p);
+            p=p+alloc;
+            U[perm[i]]=alloc;
+            i=i+1;
+        end
+
+    end
+    return U;
+end
+
+function ev_lar(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,lar_policy,snapshots)
+end
+
+
+function ev_lar_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,lar_policy,C,snapshots)
+end
+
+function las_policy(evs::Array{EVinstance},C::Float64)
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+        attained = [ev.requestedEnergy-ev.currentWorkload for ev in evs];
+        perm = sortperm(attained);
+
+        p=0.0;
+        i=1;
+        U=zeros(length(evs));
+
+        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
+        while p<C && i<=length(evs)
+            alloc = min(evs[perm[i]].chargingPower,C-p);
+            p=p+alloc;
+            U[perm[i]]=alloc;
+            i=i+1;
+        end
+
+    end
+    return U;
+end
+
+function ev_las(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,las_policy,snapshots)
+end
+
+
+function ev_las_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,las_policy,C,snapshots)
+end
+
+function ratio_policy(evs::Array{EVinstance},C::Float64)
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+        ratios = [ev.currentWorkload/ev.requestedEnergy for ev in evs];
+        perm = sortperm(ratios,rev=true);
+
+        p=0.0;
+        i=1;
+        U=zeros(length(evs));
+
+        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
+        while p<C && i<=length(evs)
+            alloc = min(evs[perm[i]].chargingPower,C-p);
+            p=p+alloc;
+            U[perm[i]]=alloc;
+            i=i+1;
+        end
+
+    end
+    return U;
+end
+
+function ev_ratio(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,ratio_policy,snapshots)
+end
+
+
+function ev_ratio_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,ratio_policy,C,snapshots)
+end
