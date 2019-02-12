@@ -36,15 +36,15 @@ l=@layout [a;b;c];
 p=plot(p1,p2,p3,layout=l)
 display(p)
 
-#CDF of departure attained workloads
+#CDF of departure reneged workloads
 
-Sa = sort([ev.departureWorkload for ev in sim.EVs]);
-n = length(Sa);
+Sr = sort([ev.departureWorkload for ev in sim.EVs]);
+n = length(Sr);
 p = plot(   xlabel="w (kWh)",
             ylabel="P(Sa⩽w)",
-            title="Attained work CDF")
+            title="Reneged work CDF")
 
-plot!(p,Sa,(1:n)/n,lt=:steppost,legend=:none)
+plot!(p,Sr,(1:n)/n,lt=:steppost,legend=:none)
 display(p)
 
 #State space of the last snapshot
@@ -54,8 +54,8 @@ w = [ev.requestedEnergy - ev.currentWorkload for ev in snap.charging];
 d = [ev.departureTime - ev.arrivalTime - ev.currentDeadline for ev in snap.charging];
 on = [ev.currentPower>0 for ev in snap.charging];
 
-p = plot(   xlabel = "Remaining workload",
-            ylabel = "Remaining soj. time",
+p = plot(   xlabel = "Attained work",
+            ylabel = "Soj. time",
             title = "State-space snapshot")
 
 scatter!(p,w[on.==true],d[on.==true],markershape=:circle,markersize=4,color=:blue,label="In service")

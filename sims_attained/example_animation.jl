@@ -13,7 +13,7 @@ frames = 24*45;
 
 snaps = collect(range(0.01,stop=Tfinal,length=frames));
 
-sim = ev_lifo(lambda,mu,gamma,Tfinal,C,snapshots=snaps)
+sim = ev_las(lambda,mu,gamma,Tfinal,C,snapshots=snaps)
 compute_statistics!(sim)
 
 prog=Progress(length(snaps), dt=1, desc="Creando animacion... ");
@@ -39,4 +39,4 @@ anim = @animate for i=1:length(snaps)
     next!(prog);
 end
 
-gif(anim, "sims_attained/lifo.gif", fps = 24)
+gif(anim, "sims_attained/las.gif", fps = 24)
