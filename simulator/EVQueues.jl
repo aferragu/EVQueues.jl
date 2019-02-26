@@ -4,9 +4,7 @@ module EVQueues
 
 using ProgressMeter, Distributions, Serialization
 
-export  ev_parallel, ev_pf, ev_edf, ev_llf, ev_llr, ev_exact, ev_peak, ev_fifo, ev_lifo, ev_lar, ev_las, ev_ratio, ev_lrpt,
-        ev_parallel_trace, ev_pf_trace, ev_edf_trace, ev_llf_trace, ev_llr_trace, ev_exact_trace, ev_peak_trace, ev_fifo_trace, ev_lifo_trace, ev_lar_trace, ev_las_trace, ev_ratio_trace, ev_lrpt_trace,
-        compute_statistics!, compute_fairness,
+export  compute_statistics!, compute_fairness,
         EVSim, loadsim, savesim
 
 mutable struct EVinstance
@@ -61,9 +59,8 @@ end
 
 include("ev_sim.jl")  ##codigo del simulador comun
 include("ev_sim_trace.jl") ##codigo del simulador a partir de trazas
-include("policies.jl")  ##codigo que implementa las politicas
 include("utilities.jl") ##codigo con utilidades varias
-
+include("policies.jl")  ##codigo que implementa las politicas
 
 function savesim(sim::EVSim, file::String)
     io=open(file,"w");

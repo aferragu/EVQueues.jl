@@ -14,14 +14,7 @@ function parallel_policy(evs::Array{EVinstance},C::Float64)
     return U
 end
 
-function ev_parallel(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,parallel_policy,snapshots)
-end
-
-
-function ev_parallel_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,parallel_policy,C,snapshots)
-end
+@addpolicy("parallel",parallel_policy)
 
 function edf_policy(evs::Array{EVinstance},C::Float64)
 
@@ -50,13 +43,7 @@ function edf_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-function ev_edf(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,edf_policy,snapshots)
-end
-
-function ev_edf_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,edf_policy,C,snapshots)
-end
+@addpolicy("edf",edf_policy)
 
 function llf_policy(evs::Array{EVinstance},C::Float64)
 
@@ -83,13 +70,7 @@ function llf_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-function ev_llf(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,llf_policy,snapshots)
-end
-
-function ev_llf_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,llf_policy,C,snapshots)
-end
+@addpolicy("llf",llf_policy)
 
 function llr_policy(evs::Array{EVinstance},C::Float64)
 
@@ -116,14 +97,8 @@ function llr_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-function ev_llr(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,llr_policy,snapshots)
-end
+@addpolicy("llr",llr_policy)
 
-
-function ev_llr_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,llr_policy,C,snapshots)
-end
 
 function pf_policy(evs::Array{EVinstance},C::Float64)
 
@@ -169,13 +144,8 @@ function compute_pf(workloads,deadlinesON,C)
 
 end
 
-function ev_pf(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,pf_policy,snapshots)
-end
+@addpolicy("pf",pf_policy)
 
-function ev_pf_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,pf_policy,C,snapshots)
-end
 
 function exact_policy(evs::Array{EVinstance},C::Float64)
 
@@ -199,13 +169,7 @@ function exact_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-function ev_exact(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,exact_policy,snapshots)
-end
-
-function ev_exact_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,exact_policy,C,snapshots)
-end
+@addpolicy("exact",exact_policy)
 
 using JuMP, Gurobi
 
@@ -249,13 +213,8 @@ function peak_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-function ev_peak(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,peak_policy,snapshots)
-end
+@addpolicy("peak",peak_policy)
 
-function ev_peak_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,peak_policy,C,snapshots)
-end
 
 function fifo_policy(evs::Array{EVinstance},C::Float64)
 
@@ -278,13 +237,7 @@ function fifo_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-function ev_fifo(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,fifo_policy,snapshots)
-end
-
-function ev_fifo_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,fifo_policy,C,snapshots)
-end
+@addpolicy("fifo",fifo_policy)
 
 
 function lifo_policy(evs::Array{EVinstance},C::Float64)
@@ -308,13 +261,8 @@ function lifo_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-function ev_lifo(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,lifo_policy,snapshots)
-end
+@addpolicy("lifo",lifo_policy)
 
-function ev_lifo_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,lifo_policy,C,snapshots)
-end
 
 function lar_policy(evs::Array{EVinstance},C::Float64)
 
@@ -341,14 +289,8 @@ function lar_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-function ev_lar(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,lar_policy,snapshots)
-end
+@addpolicy("lar",lar_policy)
 
-
-function ev_lar_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,lar_policy,C,snapshots)
-end
 
 function las_policy(evs::Array{EVinstance},C::Float64)
 
@@ -375,14 +317,8 @@ function las_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-function ev_las(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,las_policy,snapshots)
-end
+@addpolicy("las",las_policy)
 
-
-function ev_las_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,las_policy,C,snapshots)
-end
 
 function ratio_policy(evs::Array{EVinstance},C::Float64)
 
@@ -409,14 +345,8 @@ function ratio_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-function ev_ratio(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,ratio_policy,snapshots)
-end
+@addpolicy("ratio",ratio_policy)
 
-
-function ev_ratio_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,ratio_policy,C,snapshots)
-end
 
 function lrpt_policy(evs::Array{EVinstance},C::Float64)
 
@@ -443,11 +373,4 @@ function lrpt_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-function ev_lrpt(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
-    ev_sim(lambda,mu,gamma,Tfinal,C,lrpt_policy,snapshots)
-end
-
-
-function ev_lrpt_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-    ev_sim_trace(arribos,demandas,salidas,potencias,lrpt_policy,C,snapshots)
-end
+@addpolicy("lrpt",lrpt_policy)

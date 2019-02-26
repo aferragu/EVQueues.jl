@@ -55,3 +55,23 @@ function compute_fairness(sim::EVSim,t::Vector{Float64},h::Float64)
     end
     return J;
 end
+
+macro addpolicy(name::String,policy::Symbol)
+    f1 = Symbol("ev_",name);
+    f2 = Symbol("ev_",name,"_trace");
+    eval( quote
+
+
+        function $f1(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+            ev_sim(lambda,mu,gamma,Tfinal,C,$policy,snapshots)
+        end
+
+
+        function $f2(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+            ev_sim_trace(arribos,demandas,salidas,potencias,$policy,C,snapshots)
+        end
+
+        export $f1, $f2
+
+    end)
+end
