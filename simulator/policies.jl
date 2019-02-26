@@ -417,3 +417,37 @@ end
 function ev_ratio_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
     ev_sim_trace(arribos,demandas,salidas,potencias,ratio_policy,C,snapshots)
 end
+
+function lrpt_policy(evs::Array{EVinstance},C::Float64)
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+        remaining = [ev.currentWorkload for ev in evs];
+        perm = sortperm(remaining,rev=true);
+
+        p=0.0;
+        i=1;
+        U=zeros(length(evs));
+
+        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
+        while p<C && i<=length(evs)
+            alloc = min(evs[perm[i]].chargingPower,C-p);
+            p=p+alloc;
+            U[perm[i]]=alloc;
+            i=i+1;
+        end
+
+    end
+    return U;
+end
+
+function ev_lrpt(lambda,mu,gamma,Tfinal,C=Inf;snapshots=[Inf])
+    ev_sim(lambda,mu,gamma,Tfinal,C,lrpt_policy,snapshots)
+end
+
+
+function ev_lrpt_trace(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
+    ev_sim_trace(arribos,demandas,salidas,potencias,lrpt_policy,C,snapshots)
+end
