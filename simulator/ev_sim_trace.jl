@@ -23,7 +23,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots)
         "AvgDeadline" => mean(salidas-arribos),
         "SimTime" => salidas[end],
         "Capacity" => C,
-        "Policy" => policy,
+        "Policy" => get_policy_name(policy),
         "SnapshotTimes" => snapshots
     )
 

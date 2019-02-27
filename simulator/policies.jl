@@ -14,7 +14,7 @@ function parallel_policy(evs::Array{EVinstance},C::Float64)
     return U
 end
 
-@addpolicy("parallel",parallel_policy)
+@addpolicy("parallel")
 
 function edf_policy(evs::Array{EVinstance},C::Float64)
 
@@ -43,7 +43,7 @@ function edf_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-@addpolicy("edf",edf_policy)
+@addpolicy("edf")
 
 function llf_policy(evs::Array{EVinstance},C::Float64)
 
@@ -70,7 +70,7 @@ function llf_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-@addpolicy("llf",llf_policy)
+@addpolicy("llf")
 
 function llr_policy(evs::Array{EVinstance},C::Float64)
 
@@ -97,7 +97,7 @@ function llr_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-@addpolicy("llr",llr_policy)
+@addpolicy("llr")
 
 
 function pf_policy(evs::Array{EVinstance},C::Float64)
@@ -144,7 +144,7 @@ function compute_pf(workloads,deadlinesON,C)
 
 end
 
-@addpolicy("pf",pf_policy)
+@addpolicy("pf")
 
 
 function exact_policy(evs::Array{EVinstance},C::Float64)
@@ -169,7 +169,7 @@ function exact_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-@addpolicy("exact",exact_policy)
+@addpolicy("exact")
 
 using JuMP, Gurobi
 
@@ -213,7 +213,7 @@ function peak_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-@addpolicy("peak",peak_policy)
+@addpolicy("peak")
 
 
 function fifo_policy(evs::Array{EVinstance},C::Float64)
@@ -237,7 +237,7 @@ function fifo_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-@addpolicy("fifo",fifo_policy)
+@addpolicy("fifo")
 
 
 function lifo_policy(evs::Array{EVinstance},C::Float64)
@@ -261,7 +261,7 @@ function lifo_policy(evs::Array{EVinstance},C::Float64)
 
 end
 
-@addpolicy("lifo",lifo_policy)
+@addpolicy("lifo")
 
 
 function lar_policy(evs::Array{EVinstance},C::Float64)
@@ -289,7 +289,7 @@ function lar_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-@addpolicy("lar",lar_policy)
+@addpolicy("lar")
 
 
 function las_policy(evs::Array{EVinstance},C::Float64)
@@ -317,7 +317,7 @@ function las_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-@addpolicy("las",las_policy)
+@addpolicy("las")
 
 
 function ratio_policy(evs::Array{EVinstance},C::Float64)
@@ -345,7 +345,7 @@ function ratio_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-@addpolicy("ratio",ratio_policy)
+@addpolicy("ratio")
 
 
 function lrpt_policy(evs::Array{EVinstance},C::Float64)
@@ -373,4 +373,4 @@ function lrpt_policy(evs::Array{EVinstance},C::Float64)
     return U;
 end
 
-@addpolicy("lrpt",lrpt_policy)
+@addpolicy("lrpt")

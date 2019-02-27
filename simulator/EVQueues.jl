@@ -57,9 +57,9 @@ mutable struct EVSim
     stats::SimStatistics
 end
 
+include("utilities.jl") ##codigo con utilidades varias
 include("ev_sim.jl")  ##codigo del simulador comun
 include("ev_sim_trace.jl") ##codigo del simulador a partir de trazas
-include("utilities.jl") ##codigo con utilidades varias
 include("policies.jl")  ##codigo que implementa las politicas
 
 function savesim(sim::EVSim, file::String)

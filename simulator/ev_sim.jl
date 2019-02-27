@@ -10,7 +10,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
         "AvgDeadline" => 1.0/mu + 1.0/gamma,
         "SimTime" => Tfinal,
         "Capacity" => C,
-        "Policy" => policy,
+        "Policy" => get_policy_name(policy),
         "SnapshotTimes" => snapshots
     )
 
@@ -141,7 +141,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
             else
                 nextCharge = minimum([ev.currentWorkload/ev.currentPower for ev in charging]);
             end
-            
+
             nextDepON = minimum([ev.currentDeadline for ev in charging]);
         else
             nextCharge = Inf;

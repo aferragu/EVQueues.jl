@@ -41,8 +41,8 @@ p = plot(   xlabel = "Time",
             ylim = (0,1)
             )
 
-plot!(p,t,J_fifo,lw=2,label="FIFO")
-plot!(p,t,J_llr,lw=2,label="EDF")
+plot!(p,t,J_fifo,lw=2,label=sim_fifo.parameters["Policy"])
+plot!(p,t,J_llr,lw=2,label=sim_llr.parameters["Policy"])
 
 display(p)
 

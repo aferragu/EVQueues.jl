@@ -56,9 +56,10 @@ function compute_fairness(sim::EVSim,t::Vector{Float64},h::Float64)
     return J;
 end
 
-macro addpolicy(name::String,policy::Symbol)
+macro addpolicy(name::String)
     f1 = Symbol("ev_",name);
     f2 = Symbol("ev_",name,"_trace");
+    policy = Symbol(name,"_policy");
     eval( quote
 
 
@@ -74,4 +75,13 @@ macro addpolicy(name::String,policy::Symbol)
         export $f1, $f2
 
     end)
+end
+
+function get_policy_name(policy::Function)
+
+    name = String(Symbol(policy));
+    name = split(name,"_")[1];
+    name = split(name,".")[2];
+    uppercase(name);
+
 end
