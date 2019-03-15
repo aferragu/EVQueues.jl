@@ -1,9 +1,9 @@
 push!(LOAD_PATH,"simulator")
 using EVQueues, Plots, ProgressMeter
 
-lambda=40.0;
+lambda=120.0;
 mu=1.0;
-gamma=1/3;
+gamma=0.5;
 #C=80.0;
 C=60.0;
 
@@ -13,7 +13,7 @@ frames = 24*45;
 
 snaps = collect(range(0.01,stop=Tfinal,length=frames));
 
-sim = ev_parallel(lambda,mu,gamma,Tfinal,C,snapshots=snaps)
+sim = ev_lrpt(lambda,mu,gamma,Tfinal,C,snapshots=snaps)
 compute_statistics!(sim)
 
 prog=Progress(length(snaps), dt=1, desc="Creando animacion... ");
@@ -34,9 +34,9 @@ anim = @animate for i=1:length(snaps)
 
     xlabel!(p,"Carga remanente");
     ylabel!(p,"Tiempo remanente");
-    title!(p,"Población EV - Carga paralela - Baja carga")
+    title!(p,"Población EV - "*sim.parameters["Policy"])
 
     next!(prog);
 end
 
-gif(anim, "/home/andres/Escritorio/underload.gif", fps = 24)
+gif(anim, "/home/andres/Escritorio/"*sim.parameters["Policy"]*".gif", fps = 24)
