@@ -1,5 +1,5 @@
 push!(LOAD_PATH,"simulator")
-using EVQueues, CSV, DataFrames, Plots, ProgressMeter
+using EVQueues, CSV, DataFrames, Plots, ProgressMeter, Statistics
 
 function population_plot(i)
     p = plot(   xlims=(0,snaps[end]/3600),
@@ -7,7 +7,7 @@ function population_plot(i)
                 xlabel="Time (hours)",
                 ylabel="# vehicles",
                 title="Vehicles in the system",
-                legendfont = Plots.Font("sans-serif",9,:hcenter,:vcenter,0.0,RGB{U8}(0.0,0.0,0.0))
+#                legendfont = Plots.Font("sans-serif",9,:hcenter,:vcenter,0.0,RGB{U8}(0.0,0.0,0.0))
                 );
     #total pop
     plot!(p, sim_edf.timetrace.T[sim_edf.timetrace.T.<snaps[i]]/3600, sim_edf.timetrace.X[sim_edf.timetrace.T.<snaps[i]]+sim_edf.timetrace.Y[sim_edf.timetrace.T.<snaps[i]],color=:black,label="Total",linewidth=2);
@@ -28,7 +28,7 @@ function fairness_plot(i)
                 xlabel="Time",
                 ylabel="J",
                 title="Fairness index",
-                legendfont = Plots.Font("sans-serif",10,:hcenter,:vcenter,0.0,RGB{U8}(0.0,0.0,0.0)),
+#                legendfont = Plots.Font("sans-serif",10,:hcenter,:vcenter,0.0,RGB{U8}(0.0,0.0,0.0)),
                 legend = :bottomright
                 );
 
@@ -92,8 +92,8 @@ snaps = collect(step:step:Tfinal);
 C=150.0;
 
 #simula usando edf a partir de la traza. Cambiar edf por llf, llr, pf, parallel para las otras politicas.
-sim_llr = ev_llr_trace(arribos,trabajos,partidas,potencias,C;snapshots=snaps)
-sim_llf = ev_llf_trace(arribos,trabajos,partidas,potencias,C;snapshots=snaps)
+sim_llr = ev_las_trace(arribos,trabajos,partidas,potencias,C;snapshots=snaps)
+sim_llf = ev_lifo_trace(arribos,trabajos,partidas,potencias,C;snapshots=snaps)
 sim_edf = ev_edf_trace(arribos,trabajos,partidas,potencias,C;snapshots=snaps)
 
 prog=Progress(length(snaps), dt=1, desc="Creando animacion... ");
@@ -115,4 +115,4 @@ anim = @animate for i=1:length(snaps)
     next!(prog);
 end
 
-gif(anim, "google_data_power/anim.gif", fps = 24)
+gif(anim, "/home/andres/Escritorio/anim.gif", fps = 24)
