@@ -3,13 +3,13 @@ using EVQueues, Plots
 
 lambda=120.0;
 mu=1.0;
-gamma=0.5;
+gamma=1.0;
 C=60.0;
 
 Tfinal=1000.0;
 
 
-sim = ev_lrpt(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
+sim = ev_mw(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
 compute_statistics!(sim)
 
 

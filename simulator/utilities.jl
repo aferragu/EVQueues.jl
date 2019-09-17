@@ -81,7 +81,7 @@ function get_policy_name(policy::Function)
 
     name = String(Symbol(policy));
     name = split(name,"_")[1];
-    name = split(name,".")[2];
+#    name = split(name,".")[2];
     uppercase(name);
 
 end

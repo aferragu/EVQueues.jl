@@ -374,3 +374,35 @@ function lrpt_policy(evs::Array{EVinstance},C::Float64)
 end
 
 @addpolicy("lrpt")
+
+
+
+function mw_policy(evs::Array{EVinstance},C::Float64)
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+        remaining_w = [ev.currentWorkload for ev in evs];
+        remaining_d = [ev.currentDeadline for ev in evs];
+
+        weights = min.(remaining_w,remaining_d)
+        perm = sortperm(weights,rev=true);
+
+        p=0.0;
+        i=1;
+        U=zeros(length(evs));
+
+        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
+        while p<C && i<=length(evs)
+            alloc = min(evs[perm[i]].chargingPower,C-p);
+            p=p+alloc;
+            U[perm[i]]=alloc;
+            i=i+1;
+        end
+
+    end
+    return U;
+end
+
+@addpolicy("mw")
