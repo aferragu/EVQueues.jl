@@ -376,7 +376,7 @@ end
 @addpolicy("lrpt")
 
 
-
+#max weight policy where weight is minimum between rem. work and rem. deadline
 function mw_policy(evs::Array{EVinstance},C::Float64)
 
     if length(evs)==0
@@ -406,3 +406,36 @@ function mw_policy(evs::Array{EVinstance},C::Float64)
 end
 
 @addpolicy("mw")
+
+#this policy comes from maximizing myopically the potential amount of work one can perform, ignoring future arrivals
+#it underload it behaves exactly as exact scheduling!
+function weird_policy(evs::Array{EVinstance},C::Float64)
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+
+        perm = sortperm([ev.currentDeadline for ev in evs], rev=true)
+
+        remaining_w = [ev.currentWorkload for ev in evs];
+        remaining_d = [ev.currentDeadline for ev in evs];
+
+        p=0.0;
+        i=1;
+        U=zeros(length(evs));
+
+        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
+        while p<C && i<=length(evs)
+            ev = evs[perm[i]];
+            alloc = min(ev.chargingPower,ev.chargingPower*ev.currentWorkload/ev.currentDeadline,C-p)
+            p=p+alloc;
+            U[perm[i]]=alloc;
+            i=i+1;
+        end
+
+    end
+    return U;
+end
+
+@addpolicy("weird")
