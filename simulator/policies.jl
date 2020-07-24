@@ -439,3 +439,22 @@ function weird_policy(evs::Array{EVinstance},C::Float64)
 end
 
 @addpolicy("weird")
+
+
+function edffixed_policy(evs::Array{EVinstance},C::Float64)
+
+    threshold = log(2);
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+        deadlines = [ev.currentDeadline for ev in evs];
+        U=zeros(length(evs));
+        U[deadlines.<=threshold].=1;
+    end
+    return U;
+
+end
+
+@addpolicy("edffixed")
