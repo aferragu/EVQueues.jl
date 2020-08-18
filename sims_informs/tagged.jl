@@ -36,7 +36,7 @@ d=sort(collect(d), by=x->x[1])
 
 d=[v[2] for v in d]
 
-p=plot();
+p=plot(legend=:none);
 
 using StatsBase
 
@@ -50,7 +50,7 @@ for k=K
     sigma = [z[2] for z in trace]
     tau = [z[3] for z in trace]
 
-    p=plot!(t,sigma)
+    plot!(p,t,sigma)
     #p=plot!(t,tau)
 end
 
