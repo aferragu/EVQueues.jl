@@ -1,8 +1,6 @@
-__precompile__()
-
 module EVQueues
 
-using ProgressMeter, Distributions, Serialization
+using ProgressMeter, Distributions, Serialization, JuMP, GLPK
 
 export  compute_statistics!, compute_fairness,
         EVSim, loadsim, savesim

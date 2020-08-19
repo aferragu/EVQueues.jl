@@ -1,4 +1,3 @@
-push!(LOAD_PATH,"simulator")
 using EVQueues, PGFPlots
 
 lambda=120.0;

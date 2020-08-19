@@ -1,15 +1,18 @@
-push!(LOAD_PATH,"simulator")
 using EVQueues, Plots
 
-lambda=120.0;
-mu=1.0;
-gamma=1.0;
-C=60.0;
+#tiempos de llegada. Debe estar ordenado.
+arribos = [1.0;2.0;3.0];
+#tiempos de partidas, correlativo al de arribos.
+salidas = [12.0;13.0;14.0];
+#tiempos de trabajo, correlativo al de arribos.
+trabajos = [4.0;5.0;6.0];
+#potencias
+potencias = [1.0;1.0;1.0];
+#cantidad de cargadores.
+C=1.0;
 
-Tfinal=1000.0;
-
-
-sim = ev_mw(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
+#simula usando edf a partir de la traza. Cambiar edf por llf, llr, pf, parallel para las otras politicas.
+sim = ev_edf_trace(arribos,trabajos,salidas,potencias,C,snapshots=[4.0])
 compute_statistics!(sim)
 
 
@@ -18,19 +21,19 @@ p1 = plot(  xlabel="Time",
             ylabel="# vehicles",
             title="Vehicles in charge")
 
-plot!(p1, sim.timetrace.T, sim.timetrace.X,lt=:steppost,linewidth=2,legend=:none);
+plot!(p1, sim.timetrace.T, sim.timetrace.X,linewidth=2,lt=:steppost,legend=:none);
 
 p2 = plot(  xlabel="Time",
             ylabel="# vehicles",
             title="Vehicles already charged")
 
-plot!(p2, sim.timetrace.T, sim.timetrace.Y,lt=:steppost,linewidth=2,legend=:none);
+plot!(p2, sim.timetrace.T, sim.timetrace.Y,linewidth=2,lt=:steppost,legend=:none);
 
 p3 = plot(  xlabel="Time",
             ylabel="P (kW)",
             title="Consumed power")
 
-plot!(p3, sim.timetrace.T, sim.timetrace.P,lt=:steppost,linewidth=2,legend=:none);
+plot!(p3, sim.timetrace.T, sim.timetrace.P,linewidth=2,lt=:steppost,legend=:none);
 
 l=@layout [a;b;c];
 p=plot(p1,p2,p3,layout=l)
@@ -42,7 +45,8 @@ Sa = sort([ev.departureWorkload for ev in sim.EVs]);
 n = length(Sa);
 p = plot(   xlabel="w (kWh)",
             ylabel="P(Sa⩽w)",
-            title="Attained work CDF")
+            title="Attained work CDF"
+            )
 
 plot!(p,Sa,(1:n)/n,lt=:steppost,legend=:none)
 display(p)
@@ -56,25 +60,12 @@ on = [ev.currentPower>0 for ev in snap.charging];
 
 p = plot(   xlabel = "Remaining workload",
             ylabel = "Remaining soj. time",
-            title = "State-space snapshot")
+            title = "State-space snapshot",
+            xlims = (0,3*sim.parameters["AvgEnergy"]),
+            ylims = (0,3*sim.parameters["AvgDeadline"])
+            )
 
 scatter!(p,w[on.==true],d[on.==true],markershape=:circle,markersize=4,color=:blue,label="In service")
 scatter!(p,w[on.==false],d[on.==false],markershape=:circle,markersize=4,color=:red,label="Not in service")
-
-display(p)
-
-#fairness measure over time
-
-t=collect(0:10:Tfinal);
-h=20.0;
-J=compute_fairness(sim,t,h)
-
-p = plot(   xlabel = "Time",
-            ylabel = "J",
-            title = "Fairness measure",
-            ylim = (0,1)
-            )
-
-plot!(p,t,J,lw=2,legend=:none)
 
 display(p)

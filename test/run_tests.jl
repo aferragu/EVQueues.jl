@@ -1,6 +1,4 @@
-push!(LOAD_PATH,"simulator")
-using EVQueues, PyPlot#PGFPlots, PyPlot #, StatsBase
-
+using EVQueues, Plots
 lambda=120.0;
 mu=1.0;
 gamma=0.5;

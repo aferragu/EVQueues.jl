@@ -171,8 +171,6 @@ end
 
 @addpolicy("exact")
 
-using JuMP, Gurobi
-
 function peak_policy(evs::Array{EVinstance},C::Float64)
 
 
@@ -190,7 +188,7 @@ function peak_policy(evs::Array{EVinstance},C::Float64)
         power = [ev.chargingPower for ev in evs][idx];
         n=length(evs);
 
-        m=Model(solver=GurobiSolver(OutputFlag=0))
+        m=Model(GLPK.Optimizer)
 
         @variable(m,x[1:n,1:n]>=0)
         @variable(m,auxvar)

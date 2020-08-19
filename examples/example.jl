@@ -1,15 +1,14 @@
-push!(LOAD_PATH,"simulator")
 using EVQueues, Plots
 
 lambda=120.0;
 mu=1.0;
-gamma=0.5;
+gamma=1.0;
 C=60.0;
 
 Tfinal=1000.0;
 
 
-sim = ev_lifo(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
+sim = ev_edf(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
 compute_statistics!(sim)
 
 
@@ -36,26 +35,26 @@ l=@layout [a;b;c];
 p=plot(p1,p2,p3,layout=l)
 display(p)
 
-#CDF of departure reneged workloads
+#CDF of departure attained workloads
 
-Sr = sort([ev.departureWorkload for ev in sim.EVs]);
-n = length(Sr);
+Sa = sort([ev.departureWorkload for ev in sim.EVs]);
+n = length(Sa);
 p = plot(   xlabel="w (kWh)",
             ylabel="P(Sa⩽w)",
-            title="Reneged work CDF")
+            title="Attained work CDF")
 
-plot!(p,Sr,(1:n)/n,lt=:steppost,legend=:none)
+plot!(p,Sa,(1:n)/n,lt=:steppost,legend=:none)
 display(p)
 
 #State space of the last snapshot
 snap = sim.snapshots[end];
 
-w = [ev.requestedEnergy - ev.currentWorkload for ev in snap.charging];
-d = [ev.departureTime - ev.arrivalTime - ev.currentDeadline for ev in snap.charging];
+w = [ev.currentWorkload for ev in snap.charging];
+d = [ev.currentDeadline for ev in snap.charging];
 on = [ev.currentPower>0 for ev in snap.charging];
 
-p = plot(   xlabel = "Attained work",
-            ylabel = "Soj. time",
+p = plot(   xlabel = "Remaining workload",
+            ylabel = "Remaining soj. time",
             title = "State-space snapshot")
 
 scatter!(p,w[on.==true],d[on.==true],markershape=:circle,markersize=4,color=:blue,label="In service")

@@ -1,4 +1,3 @@
-push!(LOAD_PATH,"simulator")
 using EVQueues, Plots, ProgressMeter
 
 lambda=120.0;
