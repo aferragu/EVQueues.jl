@@ -85,3 +85,17 @@ function get_policy_name(policy::Function)
     uppercase(name);
 
 end
+
+function Base.show(ev::EVinstance)
+
+    println("An EV instance with:")
+    println("Arrival time: $(ev.arrivalTime)")
+    println("Departure time: $(ev.departureTime)")
+    println("Requested energy: $(ev.requestedEnergy)")
+    println("Current remaining work: $(ev.currentWorkload)")
+    println("Current remaining deadline: $(ev.currentDeadline)")
+    println("Current charging rate: $(ev.chargingPower)")
+    println("Remaining energy on departure (if completed): $(ev.departureWorkload)")
+    println("Comppletion time (if completed): $(ev.completionTime)")
+
+end
