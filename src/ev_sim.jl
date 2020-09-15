@@ -162,7 +162,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
 
         dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
-        progreso = ceil(Int64,t/Tfinal*100);
+        progreso = ceil(UInt8,t/Tfinal*100);
         update!(prog,progreso);
 
     end
