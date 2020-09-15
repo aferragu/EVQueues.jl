@@ -8,18 +8,29 @@ export  compute_statistics!, compute_fairness,
 mutable struct EVinstance
     arrivalTime::Float64
     departureTime::Float64
+    reportedDepartureTime::Float64   ##para el caso en que hay incertidumbre
     requestedEnergy::Float64
     chargingPower::Float64
     currentWorkload::Float64
     currentDeadline::Float64
+    currentReportedDeadline::Float64
     currentPower::Float64
     departureWorkload::Float64
     completionTime::Float64
-    #inicializo la instancia solo con los 4 primeros y completo los otros al comienzo. Departure workload y CompletionTime queda en NaN
+    #inicializo la instancia solo con los 4 importantes y completo los otros al comienzo.
+    #En particular reportedDepartureTime lo pongo igual a Departure time por defecto.
+    #Departure workload y CompletionTime queda en NaN hasta que se calculen mas adelante.
     EVinstance( arrivalTime::Float64,
                 departureTime::Float64,
                 requestedEnergy::Float64,
-                chargingPower::Float64) = new(arrivalTime,departureTime,requestedEnergy,chargingPower,requestedEnergy,departureTime-arrivalTime,0.0,NaN,NaN)
+                chargingPower::Float64) = new(arrivalTime,departureTime,departureTime,requestedEnergy,chargingPower,requestedEnergy,departureTime-arrivalTime, departureTime-arrivalTime,0.0,NaN,NaN)
+    #este segundo constructor me deja llenar el reportedDepartureTime
+    #en particular el valor de currentReportedDeadline se calcula con lo el reportado
+    EVinstance( arrivalTime::Float64,
+                departureTime::Float64,
+                reportedDepartureTime::Float64,
+                requestedEnergy::Float64,
+                chargingPower::Float64) = new(arrivalTime,departureTime,reportedDepartureTime,requestedEnergy,chargingPower,requestedEnergy,departureTime-arrivalTime,reportedDepartureTime-arrivalTime,0.0,NaN,NaN)
 end
 
 mutable struct Snapshot
@@ -58,6 +69,7 @@ end
 include("utilities.jl") ##codigo con utilidades varias
 include("ev_sim.jl")  ##codigo del simulador comun
 include("ev_sim_trace.jl") ##codigo del simulador a partir de trazas
+include("ev_sim_uncertain.jl") ##codigo del simulador con incertidumbre en el deadline
 include("policies.jl")  ##codigo que implementa las politicas
 
 function savesim(sim::EVSim, file::String)

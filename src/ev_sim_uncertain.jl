@@ -1,4 +1,4 @@
-function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
+function ev_sim_uncertain(lambda,mu,gamma,Tfinal,C,policy,sigma,snapshots=[Inf])
 
     #barra de progreso
     prog=Progress(101, dt=0.5, desc="Simulando... ");
@@ -11,6 +11,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
         "SimTime" => Tfinal,
         "Capacity" => C,
         "Policy" => get_policy_name(policy),
+        "uncertainiy_parameter" => sigma,
         "SnapshotTimes" => snapshots
     )
 
@@ -18,6 +19,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
     arr_rng=Exponential(1.0/lambda);
     work_rng=Exponential(1.0/mu);
     deadline_rng=Exponential(1.0/gamma);
+    uncertainity_rng=Normal(0.0,sigma);
 
     #valores iniciales
     num=convert(Integer,round(3.3*lambda*Tfinal)+length(snapshots));
@@ -76,7 +78,8 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
             #sorteo trabajo y deadline
             w=rand(work_rng);
             dep=t+w+rand(deadline_rng);
-            push!(charging,EVinstance(t,dep,w,1.0););
+            repDep = max(dep + rand(uncertainity_rng),t) #el max es para que no me de un deadline negativo al inicio
+            push!(charging,EVinstance(t,dep,repDep,w,1.0));
 
         elseif caso==2      #charge completed
             x=x-1;
