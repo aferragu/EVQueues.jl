@@ -38,4 +38,4 @@ anim = @animate for i=1:length(snaps)
     next!(prog);
 end
 
-gif(anim, "/home/andres/Escritorio/"*sim.parameters["Policy"]*".gif", fps = 24)
+gif(anim, "/tmp/"*sim.parameters["Policy"]*".gif", fps = 24)
