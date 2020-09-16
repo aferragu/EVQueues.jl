@@ -23,4 +23,4 @@ fig = Axis([
            legendPos="north west", xlabel="Requested Service (\$S\$)", ylabel="Attained Service (\$S_r\$)", xmin=0, xmax=3, ymin=0, ymax=3, width="0.7\\columnwidth", height="0.4\\columnwidth"
     );
 
-save("/home/andres/Escritorio/sigma_compare.tex",fig,include_preamble=false)
+save("/tmp/sigma_compare.tex",fig,include_preamble=false)
