@@ -2,6 +2,7 @@ function update_vehicle(ev::EVinstance,dt::Float64)
 
     ev.currentWorkload-=ev.currentPower*dt;
     ev.currentDeadline-=dt;
+    ev.currentReportedDeadline-=dt;
 
 end
 
@@ -59,6 +60,7 @@ end
 macro addpolicy(name::String)
     f1 = Symbol("ev_",name);
     f2 = Symbol("ev_",name,"_trace");
+    f3 = Symbol("ev_",name,"_uncertain");
     policy = Symbol(name,"_policy");
     eval( quote
 
@@ -68,11 +70,19 @@ macro addpolicy(name::String)
         end
 
 
-        function $f2(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf])
-            ev_sim_trace(arribos,demandas,salidas,potencias,$policy,C,snapshots)
+        function $f2(arribos,demandas,salidas,potencias,C=Inf;snapshots=[Inf],salidaReportada=nothing)
+            ev_sim_trace(arribos,demandas,salidas,potencias,$policy,C,snapshots,salidaReportada=salidaReportada)
         end
 
-        export $f1, $f2
+        function $f2(df::DataFrame,C=Inf;snapshots=[Inf])
+            ev_sim_trace(df,$policy,C,snapshots)
+        end
+
+        function $f3(lambda,mu,gamma,Tfinal,C=Inf,uncertainity_paramter=0.0;snapshots=[Inf])
+            ev_sim_uncertain(lambda,mu,gamma,Tfinal,C,$policy,uncertainity_paramter,snapshots)
+        end
+
+        export $f1, $f2, $f3
 
     end)
 end
@@ -81,21 +91,68 @@ function get_policy_name(policy::Function)
 
     name = String(Symbol(policy));
     name = split(name,"_")[1];
-#    name = split(name,".")[2];
     uppercase(name);
 
 end
+
+##Genera una traza de arribos Poisson como la que se usa en ev_sim para pasarle
+#al ev_sim_trace. De este modo se puede fijar la traza de vehiculos. Devuelve un
+#dataframe de arribos.
+function generate_Poisson_stream(lambda,mu,gamma,Tfinal)
+
+    t=0.0
+    arr = Exponential(1/lambda)
+    work = Exponential(1/mu)
+    lax = Exponential(1/gamma)
+
+    #initial approximate memory allocation
+    n=round(Integer,1.2*lambda*Tfinal)
+    arribos = zeros(n)
+    demandas = zeros(n)
+    salidas = zeros(n)
+    #todas las potencias van a ser 1
+    potencias = ones(n)
+
+    i=0
+
+    while t<Tfinal
+
+        dt=rand(arr)
+        t=t+dt
+        i=i+1
+
+        arribos[i] = t
+        demandas[i] = rand(work)
+        salidas[i] = t+demandas[i] + rand(lax)
+
+    end
+
+    df=DataFrame(:arribos=>arribos[1:i], :demandas=>demandas[1:i], :salidas=>salidas[1:i], :potencias=>potencias[1:i])
+    return df
+end
+
 
 function Base.show(ev::EVinstance)
 
     println("An EV instance with:")
     println("Arrival time: $(ev.arrivalTime)")
     println("Departure time: $(ev.departureTime)")
+    println("Self-reported departure time: $(ev.reportedDepartureTime)")
     println("Requested energy: $(ev.requestedEnergy)")
     println("Current remaining work: $(ev.currentWorkload)")
     println("Current remaining deadline: $(ev.currentDeadline)")
+    println("Current remaining deadline as reported: $(ev.currentReportedDeadline)")
     println("Current charging rate: $(ev.chargingPower)")
-    println("Remaining energy on departure (if completed): $(ev.departureWorkload)")
+    println("Remaining energy on departure (if departed): $(ev.departureWorkload)")
     println("Comppletion time (if completed): $(ev.completionTime)")
+
+end
+
+function Base.show(sim::EVSim)
+
+    println("An EV simulation with:")
+    for key in keys(sim.parameters)
+        println("\t$key: \t\t $(sim.parameters[key])")
+    end
 
 end

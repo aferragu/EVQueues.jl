@@ -1,42 +1,29 @@
-#=
-ev_sim_trace(arribos,demandas,salidas, potencias,C,policy)
+function ev_sim_uncertain(lambda,mu,gamma,Tfinal,C,policy,sigma,snapshots=[Inf])
 
-Realiza la simulacion hasta terminar con los vehiculos de la lista.
-arribos: lista de tiempos de arribo. Debe estar ordenada.
-demandas: lista de demandas de carga (en energia)
-salidas: lista de tiempos de salida.
-potencias: lista de potencias de carga de los vehiculos
-C: potencia maxima combinada
-policy: una de las politicas definidas en EVSim
-snapshots: tiempo de capturas
-salidaReportada: vector opcional que altera los deadlines reportados.
-=#
-function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; salidaReportada=nothing)
-
-    num = length(arribos); #no. de vehiculos a procesar.
-    prog = Progress(num+1, dt=0.5, desc="Simulando... ");
-
-    eventos = 3*num+1+length(snapshots);
-
+    #barra de progreso
+    prog=Progress(101, dt=0.5, desc="Simulando... ");
 
     #guardo parametros
     params = Dict(
-        "TotalArrivals" => length(arribos),
-        "AvgEnergy" => mean(demandas),
-        "AvgDeadline" => mean(salidas-arribos),
-        "SimTime" => salidas[end],
+        "ArrivalRate" => lambda,
+        "AvgEnergy" => 1.0/mu,
+        "AvgDeadline" => 1.0/mu + 1.0/gamma,
+        "SimTime" => Tfinal,
         "Capacity" => C,
         "Policy" => get_policy_name(policy),
-        "AvgReportedDeadline" => NaN,
+        "uncertainiy_parameter" => sigma,
         "SnapshotTimes" => snapshots
     )
 
-    if salidaReportada!=nothing
-        params["AvgReportedDeadline"] = mean(salidaReportada)
-    end
+    #variables aleatorias de los clientes
+    arr_rng=Exponential(1.0/lambda);
+    work_rng=Exponential(1.0/mu);
+    deadline_rng=Exponential(1.0/gamma);
+    uncertainity_rng=Normal(0.0,sigma);
 
     #valores iniciales
-    T=zeros(eventos);
+    num=convert(Integer,round(3.3*lambda*Tfinal)+length(snapshots));
+    T=zeros(num);
     X=zeros(UInt16,length(T));   #charging vehicles
     Y=zeros(UInt16,length(T));   #already charged
     P=zeros(Float64,length(T));   #used power
@@ -65,7 +52,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
     arrivals=0;
     expired=0;
 
-    nextArr = arribos[arrivals+1]-t; #inicializo al primer arribo
+    nextArr = rand(arr_rng);
     nextCharge = Inf;
     nextDepON = Inf;
     nextDepOFF = Inf;
@@ -73,7 +60,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
 
     dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
-    while dt<Inf
+    while t<Tfinal
 
         t=t+dt;
         nextArr=nextArr-dt;
@@ -85,19 +72,14 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
 
         if caso==1          #arribo
             arrivals=arrivals+1;
-            if arrivals<num
-                nextArr = arribos[arrivals+1]-t;
-            else
-                nextArr = Inf;
-            end
-
+            nextArr = rand(arr_rng);
             x=x+1;
 
-            if salidaReportada==nothing
-                push!(charging,EVinstance(t,salidas[arrivals],demandas[arrivals],potencias[arrivals]));
-            else
-                push!(charging,EVinstance(t,salidas[arrivals],salidaReportada[arrivals],demandas[arrivals],potencias[arrivals]));
-            end
+            #sorteo trabajo y deadline
+            w=rand(work_rng);
+            dep=t+w+rand(deadline_rng);
+            repDep = max(dep + rand(uncertainity_rng),t) #el max es para que no me de un deadline negativo al inicio
+            push!(charging,EVinstance(t,dep,repDep,w,1.0));
 
         elseif caso==2      #charge completed
             x=x-1;
@@ -150,9 +132,8 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
         end
 
         powerAllocation = policy(charging,C);
-
         for j=1:length(charging)
-            charging[j].currentPower=powerAllocation[j]
+            charging[j].currentPower=powerAllocation[j];
         end
         p = sum(powerAllocation);
 
@@ -163,6 +144,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
             else
                 nextCharge = minimum([ev.currentWorkload/ev.currentPower for ev in charging]);
             end
+
             nextDepON = minimum([ev.currentDeadline for ev in charging]);
         else
             nextCharge = Inf;
@@ -183,7 +165,8 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
 
         dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
-        update!(prog,arrivals);
+        progreso = ceil(Integer,t/Tfinal*100);
+        update!(prog,progreso);
 
     end
 
@@ -198,19 +181,4 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
     trace = TimeTrace(T,X,Y,P);
     stats = SimStatistics([],[],[],[],NaN,NaN,NaN,NaN);
     return EVSim(params,trace,finished,snaps,stats)
-end
-
-
-### DataFrame Compatibility
-
-#Recibe un dataframe que tiene:
-#arribos, demandas, salidas, potencias y opcionalmente salidaReportada
-#se encarga de desarmar el dataframe y llamar a ev_sim_trace anterior
-function ev_sim_trace(df::DataFrame,policy,C,snapshots)
-
-    if "salidaReportada" in names(df)
-        ev_sim_trace(df[!,:arribos],df[!,:demandas],df[!,:salidas],df[!,:potencias],policy,C,snapshots; salidaReportada=df[!,:salidaReportada])
-    else
-        ev_sim_trace(df[!,:arribos],df[!,:demandas],df[!,:salidas],df[!,:potencias],policy,C,snapshots)
-    end
 end

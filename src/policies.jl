@@ -23,7 +23,7 @@ function edf_policy(evs::Array{EVinstance},C::Float64)
         #nothing to do, return empty array for consistence
         U=Array{Float64}(undef,0);
     else
-        deadlines = [ev.currentDeadline for ev in evs];
+        deadlines = [ev.currentReportedDeadline for ev in evs];
         perm = sortperm(deadlines);
 
         p=0.0;
@@ -51,7 +51,7 @@ function llf_policy(evs::Array{EVinstance},C::Float64)
         #nothing to do, return empty array for consistence
         U=Array{Float64}(undef,0);
     else
-        laxities = [ev.currentDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
+        laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
         perm = sortperm(laxities);
 
         p=0.0;
@@ -78,7 +78,7 @@ function llr_policy(evs::Array{EVinstance},C::Float64)
         #nothing to do, return empty array for consistence
         U=Array{Float64}(undef,0);
     else
-        relative_laxities = [ev.currentDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
+        relative_laxities = [ev.currentReportedDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
         perm = sortperm(relative_laxities);
 
         p=0.0;
@@ -108,7 +108,7 @@ function pf_policy(evs::Array{EVinstance},C::Float64)
     else
         ##TODO Compute pf bien
         workloads = [ev.currentWorkload for ev in evs];
-        deadlines = [ev.currentDeadline for ev in evs];
+        deadlines = [ev.currentReportedDeadline for ev in evs];
         U=compute_pf(worklodas,deadlines,C)
     end
     return U;
@@ -155,7 +155,7 @@ function exact_policy(evs::Array{EVinstance},C::Float64)
         U=Array{Float64}(undef,0);
     else
         #exact scheduling o potencia maxima
-        U = [min(ev.currentWorkload/ev.currentDeadline,ev.chargingPower) for ev in evs];
+        U = [min(ev.currentWorkload/ev.currentReportedDeadline,ev.chargingPower) for ev in evs];
 
         #curtailing si me paso de C
         if sum(U)>C
@@ -180,10 +180,10 @@ function peak_policy(evs::Array{EVinstance},C::Float64)
     else
         U=zeros(length(evs));
 
-        idx = sortperm([ev.currentDeadline for ev in evs]);
+        idx = sortperm([ev.currentReportedDeadline for ev in evs]);
 
         sigma = [ev.currentWorkload for ev in evs][idx];
-        tau = [ev.currentDeadline for ev in evs][idx];
+        tau = [ev.currentReportedDeadline for ev in evs][idx];
         deltat=diff([0;tau]);
         power = [ev.chargingPower for ev in evs][idx];
         n=length(evs);
@@ -268,7 +268,7 @@ function lar_policy(evs::Array{EVinstance},C::Float64)
         #nothing to do, return empty array for consistence
         U=Array{Float64}(undef,0);
     else
-        relative_attained = [(ev.departureTime-ev.arrivalTime-ev.currentDeadline)*ev.chargingPower/ev.currentWorkload for ev in evs];
+        relative_attained = [(ev.departureTime-ev.arrivalTime-ev.currentReportedDeadline)*ev.chargingPower/ev.currentWorkload for ev in evs];
         perm = sortperm(relative_attained,rev=true);
 
         p=0.0;
@@ -382,7 +382,7 @@ function mw_policy(evs::Array{EVinstance},C::Float64)
         U=Array{Float64}(undef,0);
     else
         remaining_w = [ev.currentWorkload for ev in evs];
-        remaining_d = [ev.currentDeadline for ev in evs];
+        remaining_d = [ev.currentReportedDeadline for ev in evs];
 
         weights = min.(remaining_w,remaining_d)
         perm = sortperm(weights,rev=true);
@@ -414,10 +414,10 @@ function weird_policy(evs::Array{EVinstance},C::Float64)
         U=Array{Float64}(undef,0);
     else
 
-        perm = sortperm([ev.currentDeadline for ev in evs], rev=true)
+        perm = sortperm([ev.currentReportedDeadline for ev in evs], rev=true)
 
         remaining_w = [ev.currentWorkload for ev in evs];
-        remaining_d = [ev.currentDeadline for ev in evs];
+        remaining_d = [ev.currentReportedDeadline for ev in evs];
 
         p=0.0;
         i=1;
@@ -426,7 +426,7 @@ function weird_policy(evs::Array{EVinstance},C::Float64)
         #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
         while p<C && i<=length(evs)
             ev = evs[perm[i]];
-            alloc = min(ev.chargingPower,ev.chargingPower*ev.currentWorkload/ev.currentDeadline,C-p)
+            alloc = min(ev.chargingPower,ev.chargingPower*ev.currentWorkload/ev.currentReportedDeadline,C-p)
             p=p+alloc;
             U[perm[i]]=alloc;
             i=i+1;
@@ -447,7 +447,7 @@ function edffixed_policy(evs::Array{EVinstance},C::Float64)
         #nothing to do, return empty array for consistence
         U=Array{Float64}(undef,0);
     else
-        deadlines = [ev.currentDeadline for ev in evs];
+        deadlines = [ev.currentReportedDeadline for ev in evs];
         U=zeros(length(evs));
         U[deadlines.<=threshold].=1;
     end
