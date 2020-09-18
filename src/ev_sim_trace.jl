@@ -32,7 +32,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
     )
 
     if salidaReportada!=nothing
-        params["AvgReportedDeadline"] = mean(salidaReportada)
+        params["AvgReportedDeadline"] = mean(salidaReportada-arribos)
     end
 
     #valores iniciales
