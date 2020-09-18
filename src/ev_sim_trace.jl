@@ -1,14 +1,17 @@
 #=
-ev_sim_trace(arribos,demandas,tiempos,C,policy)
+ev_sim_trace(arribos,demandas,salidas, potencias,C,policy)
 
 Realiza la simulacion hasta terminar con los vehiculos de la lista.
 arribos: lista de tiempos de arribo. Debe estar ordenada.
-demandas: lista de demandas de carga, en tiempo.
-salidas: lista de tiempos de salida
-C: no. de cargadores simultaneos.
+demandas: lista de demandas de carga (en energia)
+salidas: lista de tiempos de salida.
+potencias: lista de potencias de carga de los vehiculos
+C: potencia maxima combinada
 policy: una de las politicas definidas en EVSim
+snapshots: tiempo de capturas
+salidaReportada: vector opcional que altera los deadlines reportados.
 =#
-function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots)
+function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; salidaReportada=nothing)
 
     num = length(arribos); #no. de vehiculos a procesar.
     prog = Progress(num+1, dt=0.5, desc="Simulando... ");
@@ -24,8 +27,13 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots)
         "SimTime" => salidas[end],
         "Capacity" => C,
         "Policy" => get_policy_name(policy),
+        "AvgReportedDeadline" => NaN,
         "SnapshotTimes" => snapshots
     )
+
+    if salidaReportada!=nothing
+        params["AvgReportedDeadline"] = mean(salidaReportada)
+    end
 
     #valores iniciales
     T=zeros(eventos);
@@ -85,7 +93,11 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots)
 
             x=x+1;
 
-            push!(charging,EVinstance(t,salidas[arrivals],demandas[arrivals],potencias[arrivals]));
+            if salidaReportada==nothing
+                push!(charging,EVinstance(t,salidas[arrivals],demandas[arrivals],potencias[arrivals]));
+            else
+                push!(charging,EVinstance(t,salidas[arrivals],salidaReportada[arrivals],demandas[arrivals],potencias[arrivals]));
+            end
 
         elseif caso==2      #charge completed
             x=x-1;
@@ -186,4 +198,19 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots)
     trace = TimeTrace(T,X,Y,P);
     stats = SimStatistics([],[],[],[],NaN,NaN,NaN,NaN);
     return EVSim(params,trace,finished,snaps,stats)
+end
+
+
+### DataFrame Compatibility
+
+#Recibe un dataframe que tiene:
+#arribos, demandas, salidas, potencias y opcionalmente salidaReportada
+#se encarga de desarmar el dataframe y llamar a ev_sim_trace anterior
+function ev_sim_trace(df::DataFrame,policy,C,snapshots)
+
+    if "salidaReportada" in names(df)
+        ev_sim_trace(df[!,:arribos],df[!,:demandas],df[!,:salidas],df[!,:potencias],policy,C,snapshots; salidaReportada=df[!,:salidaReportada])
+    else
+        ev_sim_trace(df[!,:arribos],df[!,:demandas],df[!,:salidas],df[!,:potencias],policy,C,snapshots)
+    end
 end

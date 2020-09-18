@@ -2,7 +2,7 @@ module EVQueues
 
 using ProgressMeter, Distributions, Serialization, JuMP, GLPK, DataFrames
 
-export  compute_statistics!, compute_fairness,
+export  compute_statistics!, compute_fairness, generate_Poisson_stream,
         EVSim, loadsim, savesim
 
 mutable struct EVinstance
