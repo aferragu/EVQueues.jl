@@ -11,7 +11,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
         "SimTime" => Tfinal,
         "Capacity" => C,
         "Policy" => get_policy_name(policy),
-        "SnapshotTimes" => snapshots
+        "Snapshots" => length(snapshots)
     )
 
     #variables aleatorias de los clientes

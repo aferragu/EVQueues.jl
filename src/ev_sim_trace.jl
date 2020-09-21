@@ -28,7 +28,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
         "Capacity" => C,
         "Policy" => get_policy_name(policy),
         "AvgReportedDeadline" => NaN,
-        "SnapshotTimes" => snapshots
+        "Snapshots" => length(snapshots)
     )
 
     if salidaReportada!=nothing

@@ -12,7 +12,7 @@ function ev_sim_uncertain(lambda,mu,gamma,Tfinal,C,policy,sigma,snapshots=[Inf])
         "Capacity" => C,
         "Policy" => get_policy_name(policy),
         "uncertainiy_parameter" => sigma,
-        "SnapshotTimes" => snapshots
+        "Snapshots" => length(snapshots)
     )
 
     #variables aleatorias de los clientes
