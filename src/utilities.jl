@@ -10,7 +10,7 @@ function compute_average(f,T::Vector{Float64},X::Vector{UInt16})
     return sum(f(X[1:end-1]).*diff(T))/T[end]
 end
 
-function comput_statistics!(sim::EVsim,t_start,t_end)
+function comput_statistics!(sim::EVSim,t_start,t_end)
 
     idx = sim.timetrace.T.>t_start && sim.timetrace.T.<t_end
     sim.stats.avgX = compute_average(x->x,sim.timetrace.T[idx],sim.timetrace.X[idx]);
