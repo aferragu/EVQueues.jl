@@ -12,7 +12,7 @@ end
 
 function compute_statistics!(sim::EVSim,t_start,t_end)
 
-    idx = sim.timetrace.T.>t_start && sim.timetrace.T.<t_end
+    idx = findall(t_start.<=sim.timetrace.T.<t_end)
     sim.stats.avgX = compute_average(x->x,sim.timetrace.T[idx],sim.timetrace.X[idx]);
     sim.stats.avgY = compute_average(x->x,sim.timetrace.T[idx],sim.timetrace.Y[idx]);
 
