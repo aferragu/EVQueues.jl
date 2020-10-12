@@ -456,3 +456,39 @@ function edffixed_policy(evs::Array{EVinstance},C::Float64)
 end
 
 @addpolicy("edffixed")
+
+function edfc_policy(evs::Array{EVinstance},C::Float64)
+
+
+    if length(evs)==0
+        #nothing to do, return empty array for consistence
+        U=Array{Float64}(undef,0);
+    else
+        deadlines = [ev.currentReportedDeadline for ev in evs];
+
+        positivas = findall(deadlines.>0)
+        negativas = findall(deadlines.<=0)
+
+        perm1 = sortperm(deadlines[positivas]);
+        perm2 = sortperm(deadlines[negativas], rev=true);
+
+        perm = [positivas[perm1];negativas[perm2]]
+        
+        p=0.0;
+        i=1;
+        U=zeros(length(evs));
+
+        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
+        while p<C && i<=length(evs)
+            alloc = min(evs[perm[i]].chargingPower,C-p);
+            p=p+alloc;
+            U[perm[i]]=alloc;
+            i=i+1;
+        end
+
+    end
+    return U;
+
+end
+
+@addpolicy("edfc")

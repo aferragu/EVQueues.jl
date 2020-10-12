@@ -10,25 +10,32 @@ function compute_average(f,T::Vector{Float64},X::Vector{UInt16})
     return sum(f(X[1:end-1]).*diff(T))/T[end]
 end
 
-function compute_statistics!(sim::EVSim)
-    sim.stats.avgX = compute_average(x->x,sim.timetrace.T,sim.timetrace.X);
-    sim.stats.avgY = compute_average(x->x,sim.timetrace.T,sim.timetrace.Y);
+function comput_statistics!(sim::EVsim,t_start,t_end)
 
-    sim.stats.avgW = mean([ev.departureWorkload for ev in sim.EVs]);
+    idx = sim.timetrace.T.>t_start && sim.timetrace.T.<t_end
+    sim.stats.avgX = compute_average(x->x,sim.timetrace.T[idx],sim.timetrace.X[idx]);
+    sim.stats.avgY = compute_average(x->x,sim.timetrace.T[idx],sim.timetrace.Y[idx]);
 
-    rangeX = collect(minimum(sim.timetrace.X):maximum(sim.timetrace.X))
-    pX = [compute_average(x->x.==l,sim.timetrace.T,sim.timetrace.X) for l in rangeX]
+    rangeX = collect(minimum(sim.timetrace.X[idx]):maximum(sim.timetrace.X[idx]))
+    pX = [compute_average(x->x.==l,sim.timetrace.T[idx],sim.timetrace.X[idx]) for l in rangeX]
     sim.stats.rangeX = rangeX;
     sim.stats.pX=pX;
 
-    rangeY = collect(minimum(sim.timetrace.Y):maximum(sim.timetrace.Y))
-    pY = [compute_average(x->x.==l,sim.timetrace.T,sim.timetrace.Y) for l in rangeY]
+    rangeY = collect(minimum(sim.timetrace.Y[idx]):maximum(sim.timetrace.Y[idx]))
+    pY = [compute_average(x->x.==l,sim.timetrace.T[idx],sim.timetrace.Y[idx]) for l in rangeY]
     sim.stats.rangeY = rangeY;
     sim.stats.pY=pY;
 
-    sim.stats.pD = sum([ev.departureWorkload>0 for ev in sim.EVs])/length(sim.EVs);
+    EVs = filter(ev-> ev.arrivalTime>= t_start && ev.departureTime<=t_end, sim.EVs)
+    sim.stats.avgW = mean([ev.departureWorkload for ev in EVs]);
+
+    sim.stats.pD = sum([ev.departureWorkload>0 for ev in EVs])/length(EVs);
 
     return nothing
+end
+
+function compute_statistics!(sim::EVSim)
+    compute_statistics!(sim,0.0,Inf)
 end
 
 function fairness_index(sa,s)
