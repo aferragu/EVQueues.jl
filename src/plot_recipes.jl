@@ -68,12 +68,13 @@ end
 
 end
 
-@userplot ServicePlot
+@userplot struct ServicePlot{T<:Tuple{AbstractVector}}
+    args::T
+end
 
-@recipe function f(p::ServicePlot)
+@recipe function f(p::ServicePlot{Tuple{Array{EVQueues.EVinstance,1}}})
 
     evs = p.args[1]
-
 
     xguide --> "Requested Energy"
     yguide --> "Attained Energy"
@@ -86,7 +87,6 @@ end
 
         seriestype := :scatter
         label --> "Charged EVs"
-        seriescolor --> :blue
 
         S,Sa
     end
