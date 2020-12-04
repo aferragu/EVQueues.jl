@@ -36,16 +36,16 @@ end
 
 function get_vehicle_trajectories(sim::EVSim,t_start=0.0,t_end=Inf)
 
-    d=Dict{Float64,Array{Array{Float64,1},1}}();
+    d=OrderedDict{Float64,Array{Array{Float64,1},1}}();
 
-    for snapshot in sim.snapshots
+    snaps = filter(snap -> t_start<=snap.t <= t_end ,sim.snapshots)
+
+    for snapshot in snaps
 
         charging = snapshot.charging;
 
         for j=1:length(charging)
-
             index = charging[j].arrivalTime;
-
             if haskey(d,index)
                 push!(d[index],[snapshot.t-charging[j].arrivalTime;charging[j].currentWorkload;charging[j].currentDeadline])
             else
@@ -54,7 +54,6 @@ function get_vehicle_trajectories(sim::EVSim,t_start=0.0,t_end=Inf)
         end
     end
 
-    d=sort(collect(d), by=x->x[1])
     return d
 end
 
