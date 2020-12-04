@@ -71,6 +71,7 @@ include("ev_sim.jl")  ##codigo del simulador comun
 include("ev_sim_trace.jl") ##codigo del simulador a partir de trazas
 include("ev_sim_uncertain.jl") ##codigo del simulador con incertidumbre en el deadline
 include("policies.jl")  ##codigo que implementa las politicas
+include("plot_recipes.jl") ##plots
 
 function savesim(sim::EVSim, file::String)
     io=open(file,"w");
