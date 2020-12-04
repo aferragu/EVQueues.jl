@@ -183,7 +183,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
 
         dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
-        update!(prog,arrivals);
+        ProgressMeter.update!(prog,arrivals);
 
     end
 

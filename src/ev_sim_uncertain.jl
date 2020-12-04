@@ -166,7 +166,7 @@ function ev_sim_uncertain(lambda,mu,gamma,Tfinal,C,policy,sigma,snapshots=[Inf])
         dt,caso = findmin([nextArr;nextCharge;nextDepON;nextDepOFF;nextSnapshot])
 
         progreso = ceil(Integer,t/Tfinal*100);
-        update!(prog,progreso);
+        ProgressMeter.update!(prog,progreso);
 
     end
 
