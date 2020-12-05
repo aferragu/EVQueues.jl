@@ -10,7 +10,7 @@ function compute_average(f,T::Vector{Float64},X::Vector{UInt16})
     return sum(f(X[1:end-1]).*diff(T))/T[end]
 end
 
-function compute_statistics!(sim::EVSim,t_start,t_end)
+function compute_statistics!(sim::EVSim,t_start=0.0,t_end=Inf)
 
     idx = findall(t_start.<=sim.timetrace.T.<t_end)
     sim.stats.avgX = compute_average(x->x,sim.timetrace.T[idx],sim.timetrace.X[idx]);
@@ -34,8 +34,27 @@ function compute_statistics!(sim::EVSim,t_start,t_end)
     return nothing
 end
 
-function compute_statistics!(sim::EVSim)
-    compute_statistics!(sim,0.0,Inf)
+function get_vehicle_trajectories(sim::EVSim,t_start=0.0,t_end=Inf)
+
+    d=OrderedDict{Float64,Array{Array{Float64,1},1}}();
+
+    snaps = filter(snap -> t_start<=snap.t <= t_end ,sim.snapshots)
+
+    for snapshot in snaps
+
+        charging = snapshot.charging;
+
+        for j=1:length(charging)
+            index = charging[j].arrivalTime;
+            if haskey(d,index)
+                push!(d[index],[snapshot.t-charging[j].arrivalTime;charging[j].currentWorkload;charging[j].currentDeadline])
+            else
+                d[index] = [];
+            end
+        end
+    end
+
+    return d
 end
 
 function fairness_index(sa,s)
