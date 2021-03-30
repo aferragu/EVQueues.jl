@@ -1,7 +1,10 @@
 # EVQueues.jl
 
-Simulación de políticas de carga de vehículos eléctricos. Basada en eventos, acepta simulación por procesos de arribo y por trazas.
+A policy simulator to evaluate deadline based scheduling policies for EV charging in a parking lot. Discrete-event simulator, supports synthetic Poisson arrivals and trace driven simulations.
 
-* /src : biblioteca del simulador.
-* /examples: ejemplos basicos de uso
-* /test : tests basicos, a mejorar
+* /src : code.
+* /examples: some usage examples.
+* /test : basic tests, to be improved.
+
+Developed by Andres Ferragut, Universidad ORT Uruguay
+
