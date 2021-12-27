@@ -149,14 +149,9 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
 
         end
 
-        powerAllocation = policy(charging,C);
-
-        for j=1:length(charging)
-            charging[j].currentPower=powerAllocation[j]
-        end
-        p = sum(powerAllocation);
-
         if x>0
+            #Apply the policy to all vehicles. Return total user power
+            p = policy(charging,C);
 
             if minimum([ev.currentWorkload for ev in charging])==0
                 nextCharge=0;
@@ -167,6 +162,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
         else
             nextCharge = Inf;
             nextDepON = Inf;
+            p=0.0;
         end
 
         if y>0

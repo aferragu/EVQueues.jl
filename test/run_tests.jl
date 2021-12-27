@@ -7,8 +7,9 @@ C=80;
 Tfinal=100.0;
 
 
-@time sim = ev_edf(lambda,mu,gamma,Tfinal,C)
+@time sim = ev_pf(lambda,mu,gamma,Tfinal,C)
 compute_statistics!(sim)
+plot(sim.timetrace)
 #@time sim2 = ev_llf(lambda,mu,gamma,Tfinal,C)
 #compute_statistics!(sim2)
 
@@ -23,10 +24,10 @@ compute_statistics!(sim)
 # k=length(sW);
 # PyPlot.plot(sW,(1:k)/k,drawstyle="steps")
 
-rW = sim.W[:,2];
-sW=sort(rW[5000:end]);
-k=length(sW);
-PyPlot.plot(sW,(1:k)/k,drawstyle="steps")
+# rW = sim.W[:,2];
+# sW=sort(rW[5000:end]);
+# k=length(sW);
+# plot(sW,(1:k)/k,drawstyle="steps")
 
 
 # fig = Axis([

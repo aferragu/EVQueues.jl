@@ -5,22 +5,21 @@
 
 ### A large family of policies are priority policies (based on a priority rule
 ### such as order of arrival, deadline order, etc)
-### The general_priority_policty implements this general case.
+### The general_priority_policty implements this general case. perm is the priority permutation
 
 function general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 
     p=0.0;
     i=1;
-    U=zeros(length(evs));
 
     while p<C && i<=length(evs)
         alloc = min(evs[perm[i]].chargingPower,C-p);
         p=p+alloc;
-        U[perm[i]]=alloc;
+        evs[perm[i]].currentPower=alloc;
         i=i+1;
     end
 
-    return U;
+    return p;
 end
 
 ### Priority based policies
@@ -132,9 +131,9 @@ function parallel_policy(evs::Array{EVinstance},C::Number)
     totPower=sum([ev.chargingPower for ev in evs]);
     curtail = min(1,C/totPower);
 
-    U = [curtail*ev.chargingPower for ev in evs]
+    [ev.currentPower = curtail*ev.chargingPower for ev in evs]
 
-    return U
+    return curtail*totPower
 end
 
 @addpolicy("parallel")
@@ -146,16 +145,20 @@ function pf_policy(evs::Array{EVinstance},C::Number)
     ##TODO Revisar comput_pf. Parece estar bien.
     workloads = [ev.currentWorkload for ev in evs];
     deadlines = [ev.currentReportedDeadline for ev in evs];
-    U=compute_pf(worklodas,deadlines,C)
+    U=compute_pf(workloads,deadlines,C)
 
-    return U;
+    for i=1:length(evs)
+        evs[i].currentPower = U[i]
+    end
+
+    return sum(U);
 end
 
-function compute_pf(workloads,deadlinesON,C)
+function compute_pf(workloads,deadlines,C)
 
-    w=workloads./deadlinesON;
+    w=workloads./deadlines;
 
-    U=zeros(w);
+    U=zeros(size(w));
     perm = sortperm(w,rev=true);
     w=sort(w,rev=true);
 
@@ -190,7 +193,11 @@ function exact_policy(evs::Array{EVinstance},C::Number)
         #otra posibilidad es ordernar por rate y asignar hasta C
     end
 
-    return U;
+    for i=1:length(evs)
+        evs[i].currentPower = U[i]
+    end
+
+    return sum(U);
 end
 
 @addpolicy("exact")
@@ -225,7 +232,11 @@ function peak_policy(evs::Array{EVinstance},C::Number)
 
     U[idx] = max.(getvalue(x)[:,1],0.0);
 
-    return U;
+    for i=1:length(evs)
+        evs[i].currentPower = U[i]
+    end
+
+    return sum(U);
 
 end
 

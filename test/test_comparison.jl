@@ -1,4 +1,3 @@
-push!(LOAD_PATH,"simulator")
 using EVQueues, Plots, Random
 
 lambda=120.0;
@@ -9,15 +8,13 @@ C=60.0;
 
 Tfinal=1000.0;
 
-Random.seed!(1234);
 sim = ev_edf(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
 compute_statistics!(sim)
 
-Random.seed!(1234);
 sim2 = ev_lifo(lambda,mu,gamma,Tfinal,C,snapshots=[Tfinal])
 compute_statistics!(sim2)
 
-att1 = [ev.requestedEnergy - ev.departureWorkload for ev in sim.EVs]
-att2 = [ev.requestedEnergy - ev.departureWorkload for ev in sim2.EVs]
+att1 = [ev.requestedEnergy - ev.departureWorkload for ev in sim.EVs[30000:end]]
+att2 = [ev.requestedEnergy - ev.departureWorkload for ev in sim2.EVs[30000:end]]
 
 scatter(att1,att2)

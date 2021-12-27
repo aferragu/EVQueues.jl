@@ -129,11 +129,8 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
         end
 
         if x>0
-            powerAllocation = policy(charging,C);
-            for j=1:length(charging)
-                charging[j].currentPower=powerAllocation[j];
-            end
-            p = sum(powerAllocation);
+            #Apply the policy to all vehicles. Return total user power
+            p = policy(charging,C);
 
             if minimum([ev.currentWorkload for ev in charging])==0
                 nextCharge=0;
@@ -145,7 +142,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
         else
             nextCharge = Inf;
             nextDepON = Inf;
-            p=0;
+            p=0.0;
         end
 
         if y>0
