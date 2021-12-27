@@ -1,129 +1,160 @@
+### The following code defines all the policies that can be used in the simulator
 
-function parallel_policy(evs::Array{EVinstance},C::Float64)
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
 
-        totPower=sum([ev.chargingPower for ev in evs]);
-        curtail = min(1,C/totPower);
 
-        U = [curtail*ev.chargingPower for ev in evs]
+### A large family of policies are priority policies (based on a priority rule
+### such as order of arrival, deadline order, etc)
+### The general_priority_policty implements this general case.
+
+function general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+
+    p=0.0;
+    i=1;
+    U=zeros(length(evs));
+
+    while p<C && i<=length(evs)
+        alloc = min(evs[perm[i]].chargingPower,C-p);
+        p=p+alloc;
+        U[perm[i]]=alloc;
+        i=i+1;
     end
-    return U
+
+    return U;
 end
 
-@addpolicy("parallel")
+### Priority based policies
 
-function edf_policy(evs::Array{EVinstance},C::Float64)
+### Earliest Deadline first.
+function edf_policy(evs::Array{EVinstance},C::Number)
 
+    deadlines = [ev.currentReportedDeadline for ev in evs];
+    perm = sortperm(deadlines);
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        deadlines = [ev.currentReportedDeadline for ev in evs];
-        perm = sortperm(deadlines);
-
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            alloc = min(evs[perm[i]].chargingPower,C-p);
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
-
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 end
 
 @addpolicy("edf")
 
-function llf_policy(evs::Array{EVinstance},C::Float64)
+### Least laxity first
+function llf_policy(evs::Array{EVinstance},C::Number)
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
-        perm = sortperm(laxities);
+    laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
+    perm = sortperm(laxities);
 
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            alloc = min(evs[perm[i]].chargingPower,C-p);
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 end
 
 @addpolicy("llf")
 
-function llr_policy(evs::Array{EVinstance},C::Float64)
+function llr_policy(evs::Array{EVinstance},C::Number)
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        relative_laxities = [ev.currentReportedDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
-        perm = sortperm(relative_laxities);
+    relative_laxities = [ev.currentReportedDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
+    perm = sortperm(relative_laxities);
 
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            alloc = min(evs[perm[i]].chargingPower,C-p);
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 end
 
 @addpolicy("llr")
 
 
-function pf_policy(evs::Array{EVinstance},C::Float64)
+### FIFO. It's a priority policy with arrival time as priority vector.
+function fifo_policy(evs::Array{EVinstance},C::Number)
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        ##TODO Compute pf bien
-        workloads = [ev.currentWorkload for ev in evs];
-        deadlines = [ev.currentReportedDeadline for ev in evs];
-        U=compute_pf(worklodas,deadlines,C)
-    end
+    perm = 1:length(evs)
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+end
+
+@addpolicy("fifo")
+
+### FIFO. It's a priority policy with reversed arrival time as priority vector.
+function lifo_policy(evs::Array{EVinstance},C::Number)
+
+    perm = length(evs):-1:1
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+end
+
+@addpolicy("lifo")
+
+### LAR: least attained ratio
+function lar_policy(evs::Array{EVinstance},C::Number)
+
+    relative_attained = [(ev.departureTime-ev.arrivalTime-ev.currentReportedDeadline)*ev.chargingPower/ev.currentWorkload for ev in evs];
+    perm = sortperm(relative_attained,rev=true);
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+end
+
+@addpolicy("lar")
+
+### LAS: least attained service
+function las_policy(evs::Array{EVinstance},C::Number)
+
+    attained = [ev.requestedEnergy-ev.currentWorkload for ev in evs];
+    perm = sortperm(attained);
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+end
+
+@addpolicy("las")
+
+### RATIO policy: just sort by current percentage of charge remaining
+function ratio_policy(evs::Array{EVinstance},C::Number)
+
+    ratios = [ev.currentWorkload/ev.requestedEnergy for ev in evs];
+    perm = sortperm(ratios,rev=true);
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+end
+
+@addpolicy("ratio")
+
+
+### LRPT: Largest remaining processing tiem
+function lrpt_policy(evs::Array{EVinstance},C::Number)
+
+    remaining = [ev.currentWorkload for ev in evs];
+    perm = sortperm(remaining,rev=true);
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+end
+
+@addpolicy("lrpt")
+
+
+### Non-priority based policies
+
+### Processor sharing Policy
+function parallel_policy(evs::Array{EVinstance},C::Number)
+
+    totPower=sum([ev.chargingPower for ev in evs]);
+    curtail = min(1,C/totPower);
+
+    U = [curtail*ev.chargingPower for ev in evs]
+
+    return U
+end
+
+@addpolicy("parallel")
+
+
+### Proportional fairness policy
+function pf_policy(evs::Array{EVinstance},C::Number)
+
+    ##TODO Revisar comput_pf. Parece estar bien.
+    workloads = [ev.currentWorkload for ev in evs];
+    deadlines = [ev.currentReportedDeadline for ev in evs];
+    U=compute_pf(worklodas,deadlines,C)
+
     return U;
 end
 
 function compute_pf(workloads,deadlinesON,C)
 
     w=workloads./deadlinesON;
-    # r=Variable(length(w));
-    # p=maximize(w'*log.(r));
-    # p.constraints+=(r.<=1);
-    # p.constraints+=(sum(r)<=C);
-    # p.constraints+=(r.>=0);
-    # solve!(p)
-    #U=r.value;
+
     U=zeros(w);
     perm = sortperm(w,rev=true);
     w=sort(w,rev=true);
@@ -147,66 +178,53 @@ end
 @addpolicy("pf")
 
 
-function exact_policy(evs::Array{EVinstance},C::Float64)
+### Exact scheduling.
+function exact_policy(evs::Array{EVinstance},C::Number)
 
+    #exact scheduling o potencia maxima
+    U = [min(ev.currentWorkload/ev.currentReportedDeadline,ev.chargingPower) for ev in evs];
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        #exact scheduling o potencia maxima
-        U = [min(ev.currentWorkload/ev.currentReportedDeadline,ev.chargingPower) for ev in evs];
-
-        #curtailing si me paso de C
-        if sum(U)>C
-            U = C/sum(U)*U;
-
-            #otra posibilidad es ordernar por rate y asignar hasta C
-        end
-
+    #curtailing si me paso de C
+    if sum(U)>C
+        U = C/sum(U)*U;
+        #otra posibilidad es ordernar por rate y asignar hasta C
     end
-    return U;
 
+    return U;
 end
 
 @addpolicy("exact")
 
-function peak_policy(evs::Array{EVinstance},C::Float64)
+### MPC peak minimizer policy. Check whether this is needed to reduce dependencies.
+function peak_policy(evs::Array{EVinstance},C::Number)
 
+    U=zeros(length(evs));
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        U=zeros(length(evs));
+    idx = sortperm([ev.currentReportedDeadline for ev in evs]);
 
-        idx = sortperm([ev.currentReportedDeadline for ev in evs]);
+    sigma = [ev.currentWorkload for ev in evs][idx];
+    tau = [ev.currentReportedDeadline for ev in evs][idx];
+    deltat=diff([0;tau]);
+    power = [ev.chargingPower for ev in evs][idx];
+    n=length(evs);
 
-        sigma = [ev.currentWorkload for ev in evs][idx];
-        tau = [ev.currentReportedDeadline for ev in evs][idx];
-        deltat=diff([0;tau]);
-        power = [ev.chargingPower for ev in evs][idx];
-        n=length(evs);
+    m=Model(GLPK.Optimizer)
 
-        m=Model(GLPK.Optimizer)
+    @variable(m,x[1:n,1:n]>=0)
+    @variable(m,auxvar)
 
-        @variable(m,x[1:n,1:n]>=0)
-        @variable(m,auxvar)
+    @constraint(m,[i=1:n,j=i+1:n],x[i,j]==0)
 
-        @constraint(m,[i=1:n,j=i+1:n],x[i,j]==0)
+    @constraint(m,[i=1:n,j=1:i],x[i,j]<=power[i])
+    @constraint(m,[i=1:n],sum(x[i,:].*deltat)==sigma[i])
+    @constraint(m,sum(x,dims=1).<=auxvar)
 
-        @constraint(m,[i=1:n,j=1:i],x[i,j]<=power[i])
-        @constraint(m,[i=1:n],sum(x[i,:].*deltat)==sigma[i])
-        @constraint(m,sum(x,dims=1).<=auxvar)
+    @objective(m,Min,auxvar)
 
-        @objective(m,Min,auxvar)
+    solve(m)
 
-        solve(m)
+    U[idx] = max.(getvalue(x)[:,1],0.0);
 
-        U[idx] = max.(getvalue(x)[:,1],0.0);
-
-
-    end
     return U;
 
 end
@@ -214,281 +232,73 @@ end
 @addpolicy("peak")
 
 
-function fifo_policy(evs::Array{EVinstance},C::Float64)
-
-
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-        while p<C && i<=length(evs)
-            alloc = min(evs[i].chargingPower,C-p);
-            p=p+alloc;
-            U[i]=alloc;
-            i=i+1;
-        end
-    end
-    return U;
-
-end
-
-@addpolicy("fifo")
-
-
-function lifo_policy(evs::Array{EVinstance},C::Float64)
-
-
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        p=0.0;
-        i=length(evs);
-        U=zeros(length(evs));
-        while p<C && i>=1
-            alloc = min(evs[i].chargingPower,C-p);
-            p=p+alloc;
-            U[i]=alloc;
-            i=i-1;
-        end
-    end
-    return U;
-
-end
-
-@addpolicy("lifo")
-
-
-function lar_policy(evs::Array{EVinstance},C::Float64)
-
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        relative_attained = [(ev.departureTime-ev.arrivalTime-ev.currentReportedDeadline)*ev.chargingPower/ev.currentWorkload for ev in evs];
-        perm = sortperm(relative_attained,rev=true);
-
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            alloc = min(evs[perm[i]].chargingPower,C-p);
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
-end
-
-@addpolicy("lar")
-
-
-function las_policy(evs::Array{EVinstance},C::Float64)
-
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        attained = [ev.requestedEnergy-ev.currentWorkload for ev in evs];
-        perm = sortperm(attained);
-
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            alloc = min(evs[perm[i]].chargingPower,C-p);
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
-end
-
-@addpolicy("las")
-
-
-function ratio_policy(evs::Array{EVinstance},C::Float64)
-
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        ratios = [ev.currentWorkload/ev.requestedEnergy for ev in evs];
-        perm = sortperm(ratios,rev=true);
-
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            alloc = min(evs[perm[i]].chargingPower,C-p);
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
-end
-
-@addpolicy("ratio")
-
-
-function lrpt_policy(evs::Array{EVinstance},C::Float64)
-
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        remaining = [ev.currentWorkload for ev in evs];
-        perm = sortperm(remaining,rev=true);
-
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            alloc = min(evs[perm[i]].chargingPower,C-p);
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
-end
-
-@addpolicy("lrpt")
-
+#### WEIRD POLICIES: This are only for trial purposes. Will be depurated.
 
 #max weight policy where weight is minimum between rem. work and rem. deadline
-function mw_policy(evs::Array{EVinstance},C::Float64)
+function mw_policy(evs::Array{EVinstance},C::Number)
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        remaining_w = [ev.currentWorkload for ev in evs];
-        remaining_d = [ev.currentReportedDeadline for ev in evs];
+    remaining_w = [ev.currentWorkload for ev in evs];
+    remaining_d = [ev.currentReportedDeadline for ev in evs];
 
-        weights = min.(remaining_w,remaining_d)
-        perm = sortperm(weights,rev=true);
+    weights = min.(remaining_w,remaining_d)
+    perm = sortperm(weights,rev=true);
 
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            alloc = min(evs[perm[i]].chargingPower,C-p);
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 end
 
 @addpolicy("mw")
 
 #this policy comes from maximizing myopically the potential amount of work one can perform, ignoring future arrivals
 #it underload it behaves exactly as exact scheduling!
-function weird_policy(evs::Array{EVinstance},C::Float64)
+function weird_policy(evs::Array{EVinstance},C::Number)
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
+    perm = sortperm([ev.currentReportedDeadline for ev in evs], rev=true)
 
-        perm = sortperm([ev.currentReportedDeadline for ev in evs], rev=true)
+    remaining_w = [ev.currentWorkload for ev in evs];
+    remaining_d = [ev.currentReportedDeadline for ev in evs];
 
-        remaining_w = [ev.currentWorkload for ev in evs];
-        remaining_d = [ev.currentReportedDeadline for ev in evs];
-
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
-
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            ev = evs[perm[i]];
-            alloc = min(ev.chargingPower,ev.chargingPower*ev.currentWorkload/ev.currentReportedDeadline,C-p)
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 end
 
 @addpolicy("weird")
 
 
-function edffixed_policy(evs::Array{EVinstance},C::Float64)
-
-    threshold = log(2);
-
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        deadlines = [ev.currentReportedDeadline for ev in evs];
-        U=zeros(length(evs));
-        U[deadlines.<=threshold].=1;
-    end
-    return U;
-
-end
-
-@addpolicy("edffixed")
-
-function edfc_policy(evs::Array{EVinstance},C::Float64)
+### Curtailed policies (for reported deadlines)
+function edfc_policy(evs::Array{EVinstance},C::Number)
 
 
-    if length(evs)==0
-        #nothing to do, return empty array for consistence
-        U=Array{Float64}(undef,0);
-    else
-        deadlines = [ev.currentReportedDeadline for ev in evs];
+    deadlines = [ev.currentReportedDeadline for ev in evs];
 
-        positivas = findall(deadlines.>0)
-        negativas = findall(deadlines.<=0)
+    positivas = findall(deadlines.>0)
+    negativas = findall(deadlines.<=0)
 
-        perm1 = sortperm(deadlines[positivas]);
-        perm2 = sortperm(deadlines[negativas], rev=true);
+    perm1 = sortperm(deadlines[positivas]);
+    perm2 = sortperm(deadlines[negativas], rev=true);
 
-        perm = [positivas[perm1];negativas[perm2]]
-        
-        p=0.0;
-        i=1;
-        U=zeros(length(evs));
+    perm = [positivas[perm1];negativas[perm2]]
 
-        #recorro el vector en orden de deadline y le asigno su potencia maxima o lo que falte pare llegar a C (puede ser 0)
-        while p<C && i<=length(evs)
-            alloc = min(evs[perm[i]].chargingPower,C-p);
-            p=p+alloc;
-            U[perm[i]]=alloc;
-            i=i+1;
-        end
-
-    end
-    return U;
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 
 end
 
 @addpolicy("edfc")
+
+function llfc_policy(evs::Array{EVinstance},C::Number)
+
+
+    deadlines = [ev.currentReportedDeadline for ev in evs];
+    laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
+
+    positivas = findall(deadlines.>0)
+    negativas = findall(deadlines.<=0)
+
+    perm1 = sortperm(laxities[positivas]);
+    perm2 = sortperm(laxities[negativas], rev=true);
+
+    perm = [positivas[perm1];negativas[perm2]]
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+
+end
+
+@addpolicy("llfc")
