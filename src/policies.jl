@@ -19,6 +19,11 @@ function general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:
         i=i+1;
     end
 
+    while i<=length(evs)
+        evs[perm[i]].currentPower=0.0;
+        i=i+1
+    end
+
     return p;
 end
 
