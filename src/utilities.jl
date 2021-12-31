@@ -182,3 +182,16 @@ function Base.show(sim::EVSim)
     end
 
 end
+
+function savesim(sim::EVSim, file::String)
+    io=open(file,"w");
+    serialize(io,sim);
+    close(io);
+end
+
+function loadsim(file::String)
+    io=open(file,"r");
+    sim::EVSim = deserialize(io);
+    close(io);
+    return sim;
+end
