@@ -75,7 +75,7 @@ end
 ### FIFO. It's a priority policy with reversed arrival time as priority vector.
 function lifo_policy(evs::Array{EVinstance},C::Number)
 
-    perm = length(evs):-1:1
+    perm = collect(length(evs):-1:1)
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 end
