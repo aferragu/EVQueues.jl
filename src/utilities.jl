@@ -6,6 +6,14 @@ function update_vehicle(ev::EVinstance,dt::Float64)
 
 end
 
+function deadline(ev::EVinstance)
+    return ev.currentDeadline
+end
+
+function laxity(ev::EVinstance)
+    return ev.currentDeadline - ev.currentWorkload/ev.chargingPower
+end
+
 function compute_average(f,T::Vector{Float64},X::Vector{UInt16})
     return sum(f(X[1:end-1]).*diff(T))/T[end]
 end

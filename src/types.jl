@@ -76,3 +76,12 @@ mutable struct EVSim
     snapshots::Vector{Snapshot}
     stats::SimStatistics
 end
+
+#defino la estructura resultados de simulacion
+mutable struct EVSimParallel
+    parameters::Dict
+    timetrace::Vector{TimeTrace}
+    EVs::Vector{Vector{EVinstance}}
+    snapshots::Vector{Vector{Snapshot}}
+    stats::Vector{SimStatistics}
+end
