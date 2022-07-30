@@ -122,6 +122,7 @@ function ev_sim_three_phase(lambda,mu,gamma,Tfinal,C,routing_policy,snapshots=[I
 
     arrivals=0;
     expired=0;
+    blocked=0;
 
     nextArr = rand(arr_rng);
     nextCharge1 = Inf;
@@ -159,18 +160,22 @@ function ev_sim_three_phase(lambda,mu,gamma,Tfinal,C,routing_policy,snapshots=[I
             w=rand(work_rng);
             dep=t+w+rand(deadline_rng);
 
-            ##ruteo
-            fase = routing_policy(charging1,charging2,charging3,C)
+            if (x1<C[1] || x2<C[2] || x3<C[3] )
+                ##ruteo, it's not full
+                fase = routing_policy(charging1,charging2,charging3,C)
             
-            if fase==1
-                push!(charging1,EVinstance(t,dep,w,1.0));
-                x1=x1+1;
-            elseif fase==2
-                push!(charging2,EVinstance(t,dep,w,1.0));
-                x2=x2+1;
+                if fase==1
+                    push!(charging1,EVinstance(t,dep,w,1.0));
+                    x1=x1+1;
+                elseif fase==2
+                    push!(charging2,EVinstance(t,dep,w,1.0));
+                    x2=x2+1;
+                else
+                    push!(charging3,EVinstance(t,dep,w,1.0));
+                    x3=x3+1;
+                end
             else
-                push!(charging3,EVinstance(t,dep,w,1.0));
-                x3=x3+1;
+                blocked = blocked+1
             end
 
         elseif caso==2      #charge 1 completed
@@ -412,6 +417,8 @@ function ev_sim_three_phase(lambda,mu,gamma,Tfinal,C,routing_policy,snapshots=[I
     stats1 = SimStatistics([],[],[],[],NaN,NaN,NaN,NaN);
     stats2 = SimStatistics([],[],[],[],NaN,NaN,NaN,NaN);
     stats3 = SimStatistics([],[],[],[],NaN,NaN,NaN,NaN);
+
+    print("prob. de bloqueo: ", blocked/arrivals)
 
     return EVSimParallel(params,[trace1,trace2,trace3],[finished1,finished2,finished3],[snaps1,snaps2,snaps3],[stats1,stats2,stats3])
 end
