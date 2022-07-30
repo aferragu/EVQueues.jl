@@ -1,3 +1,5 @@
+const P=[2/3 -1/3 -1/3;-1/3 2/3 -1/3;-1/3 -1/3 2/3] 
+
 function least_loaded_phase(charging1,charging2,charging3,C)
 
     x1=length(charging1)
@@ -27,6 +29,10 @@ function random_routing(charging1,charging2,charging3,C)
     d = Categorical(p)
     i = rand(d)
 
+end
+
+function imbalance_measure(x)
+    return x'*P*x
 end
 
 function ev_sim_three_phase(lambda,mu,gamma,Tfinal,C,routing_policy,snapshots=[Inf])
