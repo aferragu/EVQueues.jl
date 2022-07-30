@@ -14,6 +14,7 @@ include("ev_sim_uncertain.jl") ##codigo del simulador con incertidumbre en el de
 include("policies.jl")  ##codigo que implementa las politicas
 include("plot_recipes.jl") ##plots
 
-include("ev_sim_two_parkings.jl") ##plots
+include("ev_sim_two_parkings.jl")
+include("ev_sim_three_phase.jl")
 
 end #end module
