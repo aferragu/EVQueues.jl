@@ -23,24 +23,24 @@ mutable struct ChargingStation <: Agent
     totalEnergyRequested::Float64
     totalEnergyDelivered::Float64
 
-    function ChargingStation(chargingSpots=Inf, maximum_power=Inf, schedulingPolicy = parallel_policy)
+    function ChargingStation(chargingSpots=Inf, maximumPower=Inf, schedulingPolicy = parallel_policy)
         new(chargingSpots,maximumPower,schedulingPolicy,Inf,nothing,0,0.0,EVinstance[],EVinstance[],0,EVinstance[],0,0,0,0,0.0,0.0)
     end
 
 end
 
 #update state after dt time units
-function update_state!(sta::PoissonArrivalProcess, dt::Float64)
+function update_state!(sta::ChargingStation, dt::Float64)
     map(v->update_vehicle(v,dt),sta.charging);
     map(v->update_vehicle(v,dt),sta.alreadyCharged);
 end
 
-function get_traces!(sta::PoissonArrivalProcess)::Vector{Float64}
+function get_traces!(sta::ChargingStation)::Vector{Float64}
     return [sta.arrivals,sta.completedCharges,sta.incompleteDepartures,sta.totalDepartures,sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered]
 end
 
 #returns the time of next event and names
-function get_next_event(sta::PoissonArrivalProcess)::Tuple{Float64,Symbol}
+function get_next_event(sta::ChargingStation)::Tuple{Float64,Union{Symbol,Nothing}}
     return sta.timeToNextEvent, sta.nextEventType
 end
 
@@ -63,7 +63,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         sta.arrivals = sta.arrivals+1
         #check for space
         if sta.occupation < sta.chargingSpots
-            push!(charging, newEV)
+            push!(sta.charging, newEV)
             sta.occupation = sta.occupation + 1
         else
             sta.blocked = sta.blocked + 1
@@ -73,7 +73,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
 
         #someone finished its charge within their deadline
         aux,k = findmin([ev.currentWorkload for ev in sta.charging]);
-        @assert aux==0 ":FinishedCharge event with positive energy?"
+        @assert isapprox(aux,0.0,atol=eps()) ":FinishedCharge event with positive energy?"
 
         #Move to already charged
         ev = sta.charging[k];
@@ -93,7 +93,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         
         #save the finished car
         aux,k = findmin([ev.currentDeadline for ev in sta.charging]);
-        @assert aux==0 ":ChargingFinishedStay event with positive deadline?"
+        @assert isapprox(aux,0.0,atol=eps()) ":ChargingFinishedStay event with positive deadline?"
         ev=sta.charging[k];
 
         push!(sta.completedEVs,ev);
@@ -107,7 +107,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
     elseif eventType === :AlreadyChargedFinishedStay
 
         aux,k = findmin([ev.currentDeadline for ev in sta.alreadyCharged]);
-        @assert aux==0 ":AlreadyChargedFinishedStay event with positive deadline?"
+        @assert isapprox(aux,0.0,atol=eps()) ":AlreadyChargedFinishedStay event with positive deadline?"
 
         deleteat!(sta.alreadyCharged,k);
         sta.occupation = sta.occupation - 1
@@ -118,7 +118,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
 
     if length(sta.charging)>0 #there are vehicles charging
 
-        p = policy(sta.charging,sta.maximumPower);
+        p = sta.schedulingPolicy(sta.charging,sta.maximumPower);
         sta.currentPower = sum(p)
 
         if minimum([ev.currentWorkload for ev in sta.charging])==0

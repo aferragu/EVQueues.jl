@@ -21,7 +21,8 @@ mutable struct PoissonArrivalProcess <: ArrivalProcess
     sink::Union{Agent, Nothing}
 
     #state
-    nextArrival::Float64
+    timeToNextEvent::Float64
+    nextEventType::Symbol
 
     #tracing
     totalArrivals::Float64
@@ -29,8 +30,8 @@ mutable struct PoissonArrivalProcess <: ArrivalProcess
 
     function PoissonArrivalProcess(intensity::Float64,requestedEnergy::Distribution, initialLaxity::Distribution, chargingPower::Union{Distribution,Float64})
 
-        nextArrival = rand(Exponential(1/intensity))
-        new(intensity, requestedEnergy, initialLaxity, chargingPower, nothing, nextArrival,0.0,0.0)
+        firstArrival = rand(Exponential(1/intensity))
+        new(intensity, requestedEnergy, initialLaxity, chargingPower, nothing, firstArrival,:Arrival, 0.0,0.0)
 
     end
 
@@ -38,7 +39,7 @@ end
 
 #update state after dt time units
 function update_state!(arr::PoissonArrivalProcess, dt::Float64)
-    arr.nextArrival = arr.nextArrival-dt
+    arr.timeToNextEvent = arr.timeToNextEvent-dt
 end
 
 function get_traces!(arr::PoissonArrivalProcess)::Vector{Float64}
@@ -46,18 +47,18 @@ function get_traces!(arr::PoissonArrivalProcess)::Vector{Float64}
 end
 
 #returns the time of next event and names
-function get_next_event(arr::PoissonArrivalProcess)::Tuple{Float64,Symbol}
-    return arr.nextArrival,:Arrival
+function get_next_event(arr::PoissonArrivalProcess)::Tuple{Float64,Union{Symbol,Nothing}}
+    return arr.timeToNextEvent, arr.nextEventType
 end
 
 #handles the event at time t with type "event"
 function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
 
-    @assert nextArrival = 0 "Called handle_event in ArrivalProcess but nextArrival>0"
+    @assert isapprox(arr.timeToNextEvent,0.0,atol=eps()) "Called handle_event in ArrivalProcess but timeToNextEvent>0"
     arr.totalArrivals = arr.totalArrivals + 1
 
     energy = rand(arr.requestedEnergy)
-    arr.totalEnergy = arr.totalEnergy + arr.energy
+    arr.totalEnergy = arr.totalEnergy + energy
 
     if (arr.chargingPower isa Float64)
         power = arr.chargingPower
@@ -69,6 +70,7 @@ function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
 
     newEV = EVinstance(t,departure,energy,power)
     handle_event(arr.sink, t, :Arrival, newEV)
+    arr.timeToNextEvent = rand(Exponential(1/arr.intensity))
 
 end
 
@@ -88,7 +90,8 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
     sink::Union{Agent, Nothing}
 
     #state
-    nextArrival::Float64
+    timeToNextEvent::Float64
+    nextEventType::Symbol
 
     #tracing
     totalArrivals::Float64
@@ -113,23 +116,23 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
 end
 
 #update state after dt time units
-function update_state!(arr::PoissonArrivalProcess, dt::Float64)
+function update_state!(arr::TraceArrivalProcess, dt::Float64)
     arr.nextArrival = arr.nextArrival-dt
 end
 
-function get_traces!(arr::PoissonArrivalProcess)::Vector{Float64}
+function get_traces!(arr::TraceArrivalProcess)::Vector{Float64}
     return [arr.totalArrivals, arr.totalEnergy]
 end
 
 #returns the time of next event and names
-function get_next_event(arr::PoissonArrivalProcess)::Tuple{Float64,Symbol}
-    return arr.nextArrival,:Arrival
+function get_next_event(arr::TraceArrivalProcess)::Tuple{Float64,Symbol}
+    return arr.timeToNextEvent,arr.nextEventType
 end
 
 #handles the event at time t with type "event"
-function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
+function handle_event(arr::TraceArrivalProcess, t::Float64, params...)
     
-    @assert nextArrival = 0 "Called handle_event in ArrivalProcess but nextArrival>0"
+    @assert arr.timeToNextEvent == 0 "Called handle_event in ArrivalProcess but nextArrival>0"
     arr.totalArrivals = arr.totalArrivals + 1
 
     energy = arr.data[:requestedEnergies][arr.totalArrivals]
@@ -140,6 +143,7 @@ function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
 
     newEV = EVinstance(t,departure,energy,power)
     handle_event(arr.sink, t, :Arrival, newEV)
-
+    
+    #if(arr.totalArrivals < nrow(arr.data))
 end
 
