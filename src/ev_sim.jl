@@ -76,7 +76,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
             #sorteo trabajo y deadline
             w=rand(work_rng);
             dep=t+w+rand(deadline_rng);
-            push!(charging,EVinstance(t,dep,w,1.0););
+            push!(charging,EVinstance(t,dep,w,1.0));
 
         elseif caso==2      #charge completed
             x=x-1;
