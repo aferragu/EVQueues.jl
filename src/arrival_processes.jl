@@ -52,8 +52,13 @@ end
 
 #handles the event at time t with type "event"
 function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
-    
+
+    @assert nextArrival = 0 "Called handle_event in ArrivalProcess but nextArrival>0"
+    arr.totalArrivals = arr.totalArrivals + 1
+
     energy = rand(arr.requestedEnergy)
+    arr.totalEnergy = arr.totalEnergy + arr.energy
+
     if (arr.chargingPower isa Float64)
         power = arr.chargingPower
     else
@@ -62,11 +67,8 @@ function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
     laxity = rand(arr.initialLaxity)
     departure = t +energy/power + laxity
 
-    arr.totalArrivals = arr.totalArrivals + 1
-    arr.totalEnergy = arr.totalEnergy + arr.energy
-
     newEV = EVinstance(t,departure,energy,power)
-    handle_event(sink, t, newEV)
+    handle_event(arr.sink, t, :Arrival, newEV)
 
 end
 
@@ -127,6 +129,7 @@ end
 #handles the event at time t with type "event"
 function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
     
+    @assert nextArrival = 0 "Called handle_event in ArrivalProcess but nextArrival>0"
     arr.totalArrivals = arr.totalArrivals + 1
 
     energy = arr.data[:requestedEnergies][arr.totalArrivals]
@@ -136,7 +139,7 @@ function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
     arr.totalEnergy = arr.totalEnergy + energy
 
     newEV = EVinstance(t,departure,energy,power)
-    handle_event(sink, t, newEV)
+    handle_event(arr.sink, t, :Arrival, newEV)
 
 end
 

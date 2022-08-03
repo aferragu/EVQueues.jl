@@ -18,5 +18,6 @@ include("ev_sim_two_parkings.jl")
 include("ev_sim_three_phase.jl")
 
 include("arrival_processes.jl")
+include("charging_stations.jl")
 
 end #end module
