@@ -1,3 +1,5 @@
+abstract type Agent  end
+
 mutable struct EVinstance
     arrivalTime::Float64
     departureTime::Float64
