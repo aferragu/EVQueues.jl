@@ -31,7 +31,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
         "Snapshots" => length(snapshots)
     )
 
-    if salidaReportada!=nothing
+    if salidaReportada!==nothing
         params["AvgReportedDeadline"] = mean(salidaReportada-arribos)
     end
 
@@ -93,7 +93,7 @@ function ev_sim_trace(arribos,demandas,salidas,potencias,policy,C,snapshots; sal
 
             x=x+1;
 
-            if salidaReportada==nothing
+            if salidaReportada===nothing
                 push!(charging,EVinstance(t,salidas[arrivals],demandas[arrivals],potencias[arrivals]));
             else
                 push!(charging,EVinstance(t,salidas[arrivals],salidaReportada[arrivals],demandas[arrivals],potencias[arrivals]));
