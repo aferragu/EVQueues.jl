@@ -19,5 +19,6 @@ include("ev_sim_three_phase.jl")
 
 include("arrival_processes.jl")
 include("charging_stations.jl")
+include("routing_agents.jl")
 
 end #end module

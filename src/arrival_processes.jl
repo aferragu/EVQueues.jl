@@ -42,12 +42,12 @@ function update_state!(arr::PoissonArrivalProcess, dt::Float64)
     arr.timeToNextEvent = arr.timeToNextEvent-dt
 end
 
-function get_traces!(arr::PoissonArrivalProcess)::Vector{Float64}
+function get_traces(arr::PoissonArrivalProcess)::Vector{Float64}
     return [arr.totalArrivals, arr.totalEnergy]
 end
 
 #returns the time of next event and names
-function get_next_event(arr::PoissonArrivalProcess)::Tuple{Float64,Union{Symbol,Nothing}}
+function get_next_event(arr::PoissonArrivalProcess)::Tuple{Float64,Symbol}
     return arr.timeToNextEvent, arr.nextEventType
 end
 

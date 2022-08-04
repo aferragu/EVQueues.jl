@@ -1,13 +1,13 @@
 mutable struct ChargingStation <: Agent
 
     #attributes
-    chargingSpots::Int64
+    chargingSpots::Float64
     maximumPower::Float64
     schedulingPolicy::Function
 
     #state
     timeToNextEvent::Float64
-    nextEventType::Union{Symbol,Nothing}
+    nextEventType::Symbol
     occupation::Int64
     currentPower::Float64
     charging::Array{EVinstance}
@@ -24,7 +24,7 @@ mutable struct ChargingStation <: Agent
     totalEnergyDelivered::Float64
 
     function ChargingStation(chargingSpots=Inf, maximumPower=Inf, schedulingPolicy = parallel_policy)
-        new(chargingSpots,maximumPower,schedulingPolicy,Inf,nothing,0,0.0,EVinstance[],EVinstance[],0,EVinstance[],0,0,0,0,0.0,0.0)
+        new(chargingSpots,maximumPower,schedulingPolicy,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],0,EVinstance[],0,0,0,0,0.0,0.0)
     end
 
 end
@@ -35,7 +35,7 @@ function update_state!(sta::ChargingStation, dt::Float64)
     map(v->update_vehicle(v,dt),sta.alreadyCharged);
 end
 
-function get_traces!(sta::ChargingStation)::Vector{Float64}
+function get_traces(sta::ChargingStation)::Vector{Float64}
     return [sta.arrivals,sta.completedCharges,sta.incompleteDepartures,sta.totalDepartures,sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered]
 end
 
