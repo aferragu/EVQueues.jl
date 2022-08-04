@@ -132,18 +132,24 @@ end
 #handles the event at time t with type "event"
 function handle_event(arr::TraceArrivalProcess, t::Float64, params...)
     
-    @assert arr.timeToNextEvent == 0 "Called handle_event in ArrivalProcess but nextArrival>0"
+    @assert isapprox(arr.timeToNextEvent,0.0,atol=eps()) "Called handle_event in ArrivalProcess but nextArrival>0"
     arr.totalArrivals = arr.totalArrivals + 1
 
-    energy = arr.data[:requestedEnergies][arr.totalArrivals]
-    power = arr.data[:chargingPower][arr.totalArrivals]
-    departure = arr.data[:departureTimes][arr.totalArrivals]
+    energy = arr.requestedEnergies[arr.totalArrivals]
+    power = arr.chargingPowers[arr.totalArrivals]
+    departure = arr.departureTimes[arr.totalArrivals]
 
     arr.totalEnergy = arr.totalEnergy + energy
 
     newEV = EVinstance(t,departure,energy,power)
     handle_event(arr.sink, t, :Arrival, newEV)
     
-    #if(arr.totalArrivals < nrow(arr.data))
+    if arr.totalArrivals < length(arr.arrivalTimes)
+        arr.timeToNextEvent = arr.arrivalTimes[arr.totalArrivals+1] - t
+    else
+        arr.timeToNextEvent = Inf
+        arr.nextEventType = nothing
+    end
+    
 end
 
