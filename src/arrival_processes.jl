@@ -46,11 +46,6 @@ function get_traces(arr::PoissonArrivalProcess)::Vector{Float64}
     return [arr.totalArrivals, arr.totalEnergy]
 end
 
-#returns the time of next event and names
-function get_next_event(arr::PoissonArrivalProcess)::Tuple{Float64,Symbol}
-    return arr.timeToNextEvent, arr.nextEventType
-end
-
 #handles the event at time t with type "event"
 function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
 

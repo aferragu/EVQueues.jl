@@ -1,7 +1,11 @@
 ### The following code defines all the policies that can be used in the simulator
 
 
-
+#######################################################################
+###
+### Scheduling policies
+###
+#######################################################################
 
 ### A large family of policies are priority policies (based on a priority rule
 ### such as order of arrival, deadline order, etc)
@@ -248,7 +252,7 @@ end
 @addpolicy("peak")
 
 
-#### WEIRD POLICIES: This are only for trial purposes. Will be depurated.
+#### WEIRD POLICIES: These are only for trial purposes. Will be depurated.
 
 #max weight policy where weight is minimum between rem. work and rem. deadline
 function mw_policy(evs::Array{EVinstance},C::Number)
@@ -318,3 +322,32 @@ function llfc_policy(evs::Array{EVinstance},C::Number)
 end
 
 @addpolicy("llfc")
+
+
+#######################################################################
+###
+### Routing policies. For use with a Router object
+###
+#######################################################################
+
+function least_loaded_phase(stations::Vector{ChargingStation})
+
+    x = [length(sta.charging) for sta in stations]
+
+    aux,i = findmin(x)
+    return i
+
+end
+
+function random_routing(stations::Vector{ChargingStation})
+
+    x = [length(sta.charging) for sta in stations]
+    free = [sta.chargingSpots - sta.occupation for sta in stations]
+
+    p = free/sum(free)
+    d = Categorical(p)
+    i = rand(d)
+    return i
+    
+end
+

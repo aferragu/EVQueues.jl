@@ -91,6 +91,12 @@ function compute_fairness(sim::EVSim,t::Vector{Float64},h::Float64)
     return J;
 end
 
+const P=[2/3 -1/3 -1/3;-1/3 2/3 -1/3;-1/3 -1/3 2/3] 
+
+function imbalance_measure(x)
+    return x'*P*x
+end
+
 macro addpolicy(name::String)
     f1 = Symbol("ev_",name);
     f2 = Symbol("ev_",name,"_trace");

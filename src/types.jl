@@ -1,5 +1,10 @@
 abstract type Agent  end
 
+#returns the time of next event of an agent and names
+function get_next_event(agent::Agent)::Tuple{Float64,Symbol}
+    return agent.timeToNextEvent, agent.nextEventType
+end
+
 mutable struct EVinstance
     arrivalTime::Float64
     departureTime::Float64

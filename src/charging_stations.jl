@@ -39,11 +39,6 @@ function get_traces(sta::ChargingStation)::Vector{Float64}
     return [sta.arrivals,sta.completedCharges,sta.incompleteDepartures,sta.totalDepartures,sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered]
 end
 
-#returns the time of next event and names
-function get_next_event(sta::ChargingStation)::Tuple{Float64,Union{Symbol,Nothing}}
-    return sta.timeToNextEvent, sta.nextEventType
-end
-
 #handles the event at time t with type "event"
 function handle_event(sta::ChargingStation, t::Float64, params...)
 

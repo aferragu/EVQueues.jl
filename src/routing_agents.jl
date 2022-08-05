@@ -38,11 +38,6 @@ function get_traces(rtr::Router)::Vector{Float64}
     return rtr.totalArrivals, rtr.totalEnergy, rtr.routedArrivals, rtr.routedEnergy
 end
 
-#returns the time of next event and names
-function get_next_event(rtr::Router)::Tuple{Float64,Union{Symbol,Nothing}}
-    return rtr.timeToNextEvent, rtr.nextEventType
-end
-
 #handles the event at time t with type "event"
 function handle_event(rtr::Router, t::Float64, params...)
 
