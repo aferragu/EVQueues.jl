@@ -11,13 +11,15 @@ mutable struct Router <: Agent
     nextEventType::Symbol
 
     #tracing
+    trace::DataFrame
     totalArrivals::Int64
     totalEnergy::Float64
     routedArrivals::Vector{Int64}
     routedEnergy::Vector{Float64}    
 
     function Router(routingPolicy)
-        return new(routingPolicy, Agent[],Inf,:Nothing,0.0,0.0,Float64[],Float64[])
+        trace = DataFrames(time=0.0,totalarrivals=0,totalEnergy=0,routedArrivals=Vector{Vector{Float64}}(undef,0), routedEnergy=Vector{Vector{Float64}}(undef,0))
+        return new(routingPolicy, Agent[],Inf,:Nothing,trace,0,0.0,Int64[],Float64[])
     end
 
 end
@@ -34,8 +36,8 @@ function update_state!(rtr::Router, dt::Float64)
     #nothing to do, routers do not have state
 end
 
-function get_traces(rtr::Router)::Vector{Float64}
-    return rtr.totalArrivals, rtr.totalEnergy, rtr.routedArrivals, rtr.routedEnergy
+function trace_state!(rtr::Router,t::Float64)
+    push!(trace, [t,rtr.totalArrivals, rtr.totalEnergy, rtr.routedArrivals, rtr.routedEnergy])
 end
 
 #handles the event at time t with type "event"
