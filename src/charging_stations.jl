@@ -16,8 +16,6 @@ mutable struct ChargingStation <: Agent
     #tracing
     trace::DataFrame
     arrivals::Int64
-    currentCharging::Int64
-    currentAlreadyCharged::Int64
     totalCompletedCharges::Int64
     incompleteDepartures::Int64
     totalDepartures::Int64
@@ -42,7 +40,7 @@ mutable struct ChargingStation <: Agent
                             totalEnergyRequested=0.0,
                             totalEnergyDelivered=0.0
                         )
-        new(chargingSpots,maximumPower,schedulingPolicy,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],trace,0,0,0,0,0,0,0,0,EVinstance[])
+        new(chargingSpots,maximumPower,schedulingPolicy,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],trace,0,0,0,0,0,0.0,0.0,EVinstance[])
     end
 
 end
@@ -54,7 +52,7 @@ function update_state!(sta::ChargingStation, dt::Float64)
 end
 
 function trace_state!(sta::ChargingStation, t::Float64)
-    push!(sta.trace, [t,sta.arrivals,sta.occupation, sta.currentPower, length(sta.charging), length(sta.alreadyCharged),sta.totalCompletedCharges,sta.incompleteDepartures,sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
+    push!(sta.trace, [t,sta.arrivals,sta.occupation, sta.currentPower, length(sta.charging), length(sta.alreadyCharged),sta.totalCompletedCharges,sta.incompleteDepartures,sta.totalDepartures, sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
 end
 
 #handles the event at time t with type "event"

@@ -41,7 +41,7 @@ mutable struct PoissonArrivalProcess <: ArrivalProcess
 
         firstArrival = rand(Exponential(1/intensity))
         trace = DataFrame(time=[0.0], totalArrivals=[0.0], totalEnergy=[0.0])
-        new(intensity, requestedEnergy, initialLaxity, chargingPower, nothing, firstArrival,:Arrival, trace, 0.0,0.0)
+        new(intensity, requestedEnergy, initialLaxity, chargingPower, nothing, firstArrival,:Arrival, trace, 0.0,0.0);
 
     end
 

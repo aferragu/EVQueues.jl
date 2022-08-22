@@ -10,6 +10,8 @@ include("types.jl") ##General type definitions
 include("arrival_processes.jl")
 include("charging_stations.jl")
 include("routing_agents.jl")
+include("simulation.jl")
+
 
 include("utilities.jl") ##codigo con utilidades varias
 include("policies.jl")  ##codigo que implementa las politicas
