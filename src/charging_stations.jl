@@ -29,8 +29,10 @@ mutable struct ChargingStation <: Agent
 
 
     function ChargingStation(chargingSpots=Inf, maximumPower=Inf, schedulingPolicy = parallel_policy)
-        trace = DataFrame(  t=0.0, 
-                            arrivals=0, 
+        trace = DataFrame(  time=0.0, 
+                            arrivals=0,
+                            occupation = 0,
+                            currentPower = 0, 
                             currentCharging=0,
                             currentAlreadyCharged=0,
                             totalCompletedCharges=0,
@@ -52,7 +54,7 @@ function update_state!(sta::ChargingStation, dt::Float64)
 end
 
 function trace_state!(sta::ChargingStation, t::Float64)
-    push!(sta.trace, [t,sta.arrivals,sta.currentCharging,sta.currentAlreadyCharged,sta.totalCompletedCharges,sta.incompleteDepartures,sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
+    push!(sta.trace, [t,sta.arrivals,sta.occupation, sta.currentPower, length(sta.charging), length(sta.alreadyCharged),sta.totalCompletedCharges,sta.incompleteDepartures,sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
 end
 
 #handles the event at time t with type "event"
@@ -76,6 +78,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         if sta.occupation < sta.chargingSpots
             push!(sta.charging, newEV)
             sta.occupation = sta.occupation + 1
+            sta.totalEnergyRequested = sta.totalEnergyRequested + newEV.requestedEnergy
         else
             sta.blocked = sta.blocked + 1
         end
@@ -94,6 +97,9 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         #remove from charging
         deleteat!(sta.charging,k)
 
+        sta.totalCompletedCharges = sta.totalCompletedCharges + 1
+        sta.totalEnergyDelivered = sta.totalEnergyDelivered + ev.requestedEnergy
+
         ev.currentPower=0.0;
         ev.departureWorkload=0.0;
         ev.completionTime=t;
@@ -110,6 +116,9 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         push!(sta.completedEVs,ev);
         deleteat!(sta.charging,k)
         sta.occupation = sta.occupation - 1
+        sta.totalDepartures = sta.totalDepartures + 1
+        sta.incompleteDepartures = sta.incompleteDepartures + 1
+        sta.totalEnergyDelivered = sta.totalEnergyDelivered + ev.requestedEnergy - ev.currentWorkload
 
         ev.currentPower=0.0;
         ev.departureWorkload = ev.currentWorkload;
@@ -122,6 +131,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
 
         deleteat!(sta.alreadyCharged,k);
         sta.occupation = sta.occupation - 1
+        sta.totalDepartures = sta.totalDepartures + 1
 
     end
 
