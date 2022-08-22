@@ -14,8 +14,10 @@ mutable struct ChargingStation <: Agent
     alreadyCharged::Array{EVinstance}
 
     #tracing
+    trace::DataFrame
     arrivals::Int64
-    completedEVs::Array{EVinstance}
+    currentCharging::Int64
+    currentAlreadyCharged::Int64
     totalCompletedCharges::Int64
     incompleteDepartures::Int64
     totalDepartures::Int64
@@ -23,8 +25,22 @@ mutable struct ChargingStation <: Agent
     totalEnergyRequested::Float64
     totalEnergyDelivered::Float64
 
+    completedEVs::Array{EVinstance}
+
+
     function ChargingStation(chargingSpots=Inf, maximumPower=Inf, schedulingPolicy = parallel_policy)
-        new(chargingSpots,maximumPower,schedulingPolicy,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],0,EVinstance[],0,0,0,0,0.0,0.0)
+        trace = DataFrame(  t=0.0, 
+                            arrivals=0, 
+                            currentCharging=0,
+                            currentAlreadyCharged=0,
+                            totalCompletedCharges=0,
+                            incompleteDepartures=0,
+                            totalDepartures=0,
+                            blocked=0,
+                            totalEnergyRequested=0.0,
+                            totalEnergyDelivered=0.0
+                        )
+        new(chargingSpots,maximumPower,schedulingPolicy,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],trace,0,0,0,0,0,0,0,0,EVinstance[])
     end
 
 end
@@ -35,8 +51,8 @@ function update_state!(sta::ChargingStation, dt::Float64)
     map(v->update_vehicle(v,dt),sta.alreadyCharged);
 end
 
-function get_traces(sta::ChargingStation)::Vector{Float64}
-    return [sta.arrivals,sta.completedCharges,sta.incompleteDepartures,sta.totalDepartures,sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered]
+function trace_state!(sta::ChargingStation, t::Float64)
+    push!(sta.trace, [t,sta.arrivals,sta.currentCharging,sta.currentAlreadyCharged,sta.totalCompletedCharges,sta.incompleteDepartures,sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
 end
 
 #handles the event at time t with type "event"
@@ -136,14 +152,14 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
     end
 
     ##Define next event
-    aux,caso = findmin([nextCharge,nextDepON,nextDepOFF])
+    aux,case = findmin([nextCharge,nextDepON,nextDepOFF])
 
     sta.timeToNextEvent = aux
-    if caso==1
+    if case==1
         sta.nextEventType = :FinishedCharge
-    elseif caso==2
+    elseif case==2
         sta.nextEventType = :ChargingFinishedStay
-    elseif caso==3
+    elseif case==3
         sta.nextEventType = :AlreadyChargedFinishedStay
     end
 
