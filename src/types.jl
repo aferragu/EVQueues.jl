@@ -61,23 +61,25 @@ mutable struct Snapshot
     alreadyCharged::Array{EVinstance}   #already charged vehicles still present
 end
 
+mutable struct ChargingStationStatistics
+    rangeCharging::Vector{Int64}
+    pCharging::Vector{Float64} #steady state X
+    rangeAlreadyCharged::Vector{Int64}
+    pAlreadyCharged::Vector{Float64} #steady state Y
+    avgCharging::Float64       #average X
+    avgAlreadyCharged::Float64       #average Y
+    pD::Float64         #probability of expired deadline
+    avgW::Float64       #average unfinished workload (taking finished into account)
+    pB::Float64         #nlocking probability
+end
+
+
 #=
 mutable struct TimeTrace
     T::Vector{Float64}          #event times
     X::Vector{UInt16}           #charging vehicles
     Y::Vector{UInt16}           #already charged
     P::Vector{Float64}          #used power
-end
-
-mutable struct SimStatistics
-    rangeX::Vector{Integer}
-    pX::Vector{Float64} #steady state X
-    rangeY::Vector{Integer}
-    pY::Vector{Float64} #steady state Y
-    avgX::Float64       #average X
-    avgY::Float64       #average Y
-    pD::Float64         #probability of expired deadline
-    avgW::Float64       #average unfinished workload (taking finished into account)
 end
 
 #defino la estructura resultados de simulacion

@@ -89,7 +89,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
 
         #someone finished its charge within their deadline
         aux,k = findmin([ev.currentWorkload for ev in sta.charging]);
-        @assert isapprox(aux,0.0,atol=eps()) ":FinishedCharge event with positive energy?"
+        @assert isapprox(aux,0.0,atol=1e-8) ":FinishedCharge event with positive energy?"
 
         #Move to already charged
         ev = sta.charging[k];
@@ -112,7 +112,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         
         #save the finished car
         aux,k = findmin([ev.currentDeadline for ev in sta.charging]);
-        @assert isapprox(aux,0.0,atol=eps()) ":ChargingFinishedStay event with positive deadline?"
+        @assert isapprox(aux,0.0,atol=1e-8) ":ChargingFinishedStay event with positive deadline?"
         ev=sta.charging[k];
 
         push!(sta.completedEVs,ev);
@@ -129,7 +129,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
     elseif eventType === :AlreadyChargedFinishedStay
 
         aux,k = findmin([ev.currentDeadline for ev in sta.alreadyCharged]);
-        @assert isapprox(aux,0.0,atol=eps()) ":AlreadyChargedFinishedStay event with positive deadline?"
+        @assert isapprox(aux,0.0,atol=1e-8) ":AlreadyChargedFinishedStay event with positive deadline?"
 
         deleteat!(sta.alreadyCharged,k);
         sta.occupation = sta.occupation - 1

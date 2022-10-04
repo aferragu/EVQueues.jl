@@ -14,11 +14,11 @@ function laxity(ev::EVinstance)
     return ev.currentDeadline - ev.currentWorkload/ev.chargingPower
 end
 
-function compute_average(f,T::Vector{Float64},X::Vector{UInt16})
+function compute_average(f,T::Vector{Float64},X::Vector{Int64})
     return sum(f(X[1:end-1]).*diff(T))/T[end]
 end
 
-function compute_statistics!(sta::ChargingStation,t_start=0.0,t_end=Inf)
+function compute_statistics(sta::ChargingStation,t_start=0.0,t_end=Inf)
 
     trace = filter(:time => t -> t_start<= t <=t_end, sta.trace)
     avgX = compute_average(x->x,trace[!,:time],trace[!,:currentCharging]);
@@ -35,7 +35,9 @@ function compute_statistics!(sta::ChargingStation,t_start=0.0,t_end=Inf)
 
     pD = sum([ev.departureWorkload>0 for ev in EVs])/length(EVs);
 
-    return avgX,avgY,rangeX,rangeY,pX,pY,avgW,pD
+    pB = (trace[end,:blocked]-trace[1,:blocked]) / (trace[end,:arrivals] - trace[1,:arrivals])
+
+    return ChargingStationStatistics(rangeX,pX,rangeY,pY,avgX,avgY,pD,avgW,pB)
 end
 
 function get_vehicle_trajectories(sta::ChargingStation,t_start=0.0,t_end=Inf)
@@ -182,6 +184,16 @@ function Base.show(ev::EVinstance)
     println("Remaining energy on departure (if departed): $(ev.departureWorkload)")
     println("Comppletion time (if completed): $(ev.completionTime)")
 
+end
+
+function Base.show(stats::ChargingStationStatistics)
+
+    println("The charging station performance was:")
+    println("Avg. charging: $(stats.avgCharging)")
+    println("Avg. already charged: $(stats.avgAlreadyCharged)")
+    println("Avg. reneged work: $(stats.avgW)")
+    println("Missed deadline probability: $(stats.pD)")
+    println("Blocking probability: $(stats.pB)")
 end
 
 function Base.show(sim::Simulation)
