@@ -23,7 +23,11 @@ mutable struct ChargingStation <: Agent
     totalEnergyRequested::Float64
     totalEnergyDelivered::Float64
 
+    #final state of EVs through the station
     completedEVs::Array{EVinstance}
+
+    #snapshots
+    snapshots::Array{Snapshot}
 
 
     function ChargingStation(chargingSpots=Inf, maximumPower=Inf, schedulingPolicy = parallel_policy)
@@ -40,7 +44,7 @@ mutable struct ChargingStation <: Agent
                             totalEnergyRequested=0.0,
                             totalEnergyDelivered=0.0
                         )
-        new(chargingSpots,maximumPower,schedulingPolicy,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],trace,0,0,0,0,0,0.0,0.0,EVinstance[])
+        new(chargingSpots,maximumPower,schedulingPolicy,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],trace,0,0,0,0,0,0.0,0.0,EVinstance[],Snapshot[])
     end
 
 end
@@ -171,5 +175,14 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         sta.nextEventType = :AlreadyChargedFinishedStay
     end
 
-
 end
+
+function take_snapshot!(sta::ChargingStation,t::Float64)
+
+    charging = deepcopy(sta.charging)
+    alreadyCharged = deepcopy(sta.alreadyCharged)
+    snapshot = Snapshot(t,charging,alreadyCharged)
+    push!(sta.snapshots,snapshot)
+    
+end
+

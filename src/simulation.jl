@@ -1,12 +1,13 @@
 mutable struct Simulation
 
     agents::Array{EVQueues.Agent}
+    parameters::Dict
 
 end
 
 function simulate(sim::Simulation, Tfinal::Float64=Inf; snapshots::Vector{Float64} = Float64[])
 
-    prog=Progress(101, dt=0.5, desc="Simulando... ");
+    prog=Progress(101, dt=0.5, desc="Simulating... ");
 
     agents=sim.agents
 
@@ -37,9 +38,7 @@ function simulate(sim::Simulation, Tfinal::Float64=Inf; snapshots::Vector{Float6
     
         if isapprox(nextSnapshot,0,atol=1e-8)
             ##add snapshot
-
-
-            
+            take_snapshot!.(agents,t)
             snapshots = snapshots[2:end]
             isempty(snapshots) ? nextSnapshot = Inf : nextSnapshot = snapshots[1];
         

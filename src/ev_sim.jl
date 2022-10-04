@@ -20,7 +20,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
     arr = PoissonArrivalProcess(lambda,work_rng,laxity_rng,1.0)
     sta = ChargingStation(Inf,C,policy)
     connect!(arr,sta)
-    sim = Simulation([arr,sta])
+    sim = Simulation([arr,sta], params)
 
     simulate(sim, Tfinal; snapshots=snapshots)
     return sim

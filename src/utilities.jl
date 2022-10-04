@@ -18,35 +18,31 @@ function compute_average(f,T::Vector{Float64},X::Vector{UInt16})
     return sum(f(X[1:end-1]).*diff(T))/T[end]
 end
 
-function compute_statistics!(sim::EVSim,t_start=0.0,t_end=Inf)
+function compute_statistics!(sta::ChargingStation,t_start=0.0,t_end=Inf)
 
-    idx = findall(t_start.<=sim.timetrace.T.<t_end)
-    sim.stats.avgX = compute_average(x->x,sim.timetrace.T[idx],sim.timetrace.X[idx]);
-    sim.stats.avgY = compute_average(x->x,sim.timetrace.T[idx],sim.timetrace.Y[idx]);
+    trace = filter(:time => t -> t_start<= t <=t_end, sta.trace)
+    avgX = compute_average(x->x,trace[!,:time],trace[!,:currentCharging]);
+    avgY = compute_average(x->x,trace[!,:time],trace[!,:currentAlreadyCharged]);
 
-    rangeX = collect(minimum(sim.timetrace.X[idx]):maximum(sim.timetrace.X[idx]))
-    pX = [compute_average(x->x.==l,sim.timetrace.T[idx],sim.timetrace.X[idx]) for l in rangeX]
-    sim.stats.rangeX = rangeX;
-    sim.stats.pX=pX;
+    rangeX = collect(minimum(trace[!,:currentCharging]):maximum(trace[!,:currentCharging]))
+    pX = [compute_average(x->x.==l,trace[!,:time],trace[!,:currentCharging]) for l in rangeX]
 
-    rangeY = collect(minimum(sim.timetrace.Y[idx]):maximum(sim.timetrace.Y[idx]))
-    pY = [compute_average(x->x.==l,sim.timetrace.T[idx],sim.timetrace.Y[idx]) for l in rangeY]
-    sim.stats.rangeY = rangeY;
-    sim.stats.pY=pY;
+    rangeY = collect(minimum(trace[!,:currentAlreadyCharged]):maximum(trace[!,:currentAlreadyCharged]))
+    pY = [compute_average(x->x.==l,trace[!,:time],trace[!,:currentAlreadyCharged]) for l in rangeX]
+ 
+    EVs = filter(ev-> ev.arrivalTime>= t_start && ev.departureTime<=t_end, sta.completedEVs)
+    avgW = mean([ev.departureWorkload for ev in EVs]);
 
-    EVs = filter(ev-> ev.arrivalTime>= t_start && ev.departureTime<=t_end, sim.EVs)
-    sim.stats.avgW = mean([ev.departureWorkload for ev in EVs]);
+    pD = sum([ev.departureWorkload>0 for ev in EVs])/length(EVs);
 
-    sim.stats.pD = sum([ev.departureWorkload>0 for ev in EVs])/length(EVs);
-
-    return nothing
+    return avgX,avgY,rangeX,rangeY,pX,pY,avgW,pD
 end
 
-function get_vehicle_trajectories(sim::EVSim,t_start=0.0,t_end=Inf)
+function get_vehicle_trajectories(sta::ChargingStation,t_start=0.0,t_end=Inf)
 
     d=OrderedDict{Float64,Array{Array{Float64,1},1}}();
 
-    snaps = filter(snap -> t_start<=snap.t <= t_end ,sim.snapshots)
+    snaps = filter(snap -> t_start<=snap.t <= t_end ,sta.snapshots)
 
     for snapshot in snaps
 
@@ -75,13 +71,13 @@ function fairness_index(sa,s)
     return J
 end
 
-function compute_fairness(sim::EVSim,t::Vector{Float64},h::Float64)
+function compute_fairness(sta::ChargingStation,t::Vector{Float64},h::Float64)
 
     J=zeros(length(t))
 
     for i=1:length(t)
 
-        evs = filter(ev->(ev.completionTime<=t[i])&&(ev.completionTime>=t[i]-h),sim.EVs);
+        evs = filter(ev->(ev.completionTime<=t[i])&&(ev.completionTime>=t[i]-h),sta.completedEVs);
         sa = [ev.requestedEnergy-ev.departureWorkload for ev in evs];
         s = [ev.requestedEnergy for ev in evs];
 
@@ -147,11 +143,11 @@ function generate_Poisson_stream(lambda,mu,gamma,Tfinal)
 
     #initial approximate memory allocation
     n=round(Integer,1.2*lambda*Tfinal)
-    arribos = zeros(n)
-    demandas = zeros(n)
-    salidas = zeros(n)
+    arrivals = zeros(n)
+    demands = zeros(n)
+    departures = zeros(n)
     #todas las potencias van a ser 1
-    potencias = ones(n)
+    powers = ones(n)
 
     i=0
 
@@ -161,13 +157,13 @@ function generate_Poisson_stream(lambda,mu,gamma,Tfinal)
         t=t+dt
         i=i+1
 
-        arribos[i] = t
-        demandas[i] = rand(work)
-        salidas[i] = t+demandas[i] + rand(lax)
+        arrivals[i] = t
+        demands[i] = rand(work)
+        departures[i] = t+demands[i] + rand(lax)
 
     end
 
-    df=DataFrame(:arribos=>arribos[1:i], :demandas=>demandas[1:i], :salidas=>salidas[1:i], :potencias=>potencias[1:i])
+    df=DataFrame(:arrivalTimes=>arrivals[1:i], :requestedEnergies=>demands[1:i], :departureTimes=>departures[1:i], :chargingPowers=>powers[1:i])
     return df
 end
 
@@ -188,7 +184,7 @@ function Base.show(ev::EVinstance)
 
 end
 
-function Base.show(sim::EVSim)
+function Base.show(sim::Simulation)
 
     println("An EV simulation with:")
     for key in keys(sim.parameters)
@@ -197,7 +193,7 @@ function Base.show(sim::EVSim)
 
 end
 
-function savesim(sim::EVSim, file::String)
+function savesim(sim::Simulation, file::String)
     io=open(file,"w");
     serialize(io,sim);
     close(io);
@@ -205,7 +201,7 @@ end
 
 function loadsim(file::String)
     io=open(file,"r");
-    sim::EVSim = deserialize(io);
+    sim::Simulation = deserialize(io);
     close(io);
     return sim;
 end

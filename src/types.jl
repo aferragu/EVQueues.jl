@@ -5,6 +5,10 @@ function get_next_event(agent::Agent)::Tuple{Float64,Symbol}
     return agent.timeToNextEvent, agent.nextEventType
 end
 
+function take_snapshot!(agent::Agent,t::Float64)
+    #do nothing unless redefined
+end
+
 mutable struct EVinstance
     arrivalTime::Float64
     departureTime::Float64
@@ -57,6 +61,7 @@ mutable struct Snapshot
     alreadyCharged::Array{EVinstance}   #already charged vehicles still present
 end
 
+#=
 mutable struct TimeTrace
     T::Vector{Float64}          #event times
     X::Vector{UInt16}           #charging vehicles
@@ -92,3 +97,4 @@ mutable struct EVSimParallel
     snapshots::Vector{Vector{Snapshot}}
     stats::Vector{SimStatistics}
 end
+=#

@@ -123,14 +123,13 @@ end
 
 end
 
-@recipe function f(trace::EVQueues.TimeTrace)
+@recipe function f(sta::ChargingStation)
 
-    T=trace.T
-    X=trace.X
-    Y=trace.Y
-    P=trace.P
+    T=sta.trace[!,:time]
+    X=sta.trace[!,:currentCharging]
+    Y=sta.trace[!,:currentAlreadyCharged]
+    P=sta.trace[!,:currentPower]
 
-    size --> (600,800)
     xguide --> "Time"
     legend := :none
     layout := (3,1)
