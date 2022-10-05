@@ -13,7 +13,7 @@ laxity_distribution = Exponential(1/gamma)
 
 #Agents
 arr = PoissonArrivalProcess(lambda, work_distribution, laxity_distribution, 1.0)
-sta = ChargingStation(C, P, llf_policy)
+sta = ChargingStation(C, P, llf_policy, snapshots=[Tfinal])
 connect!(arr,sta)
 
 params = Dict(
@@ -29,7 +29,7 @@ params = Dict(
 sim = Simulation([arr,sta], params)
 
 #Simulate
-simulate(sim, Tfinal; snapshots=[Tfinal])
+simulate(sim, Tfinal)
 
 #Show stats
 show(compute_statistics(sta))

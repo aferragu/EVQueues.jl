@@ -27,10 +27,12 @@ mutable struct ChargingStation <: Agent
     completedEVs::Array{EVinstance}
 
     #snapshots
+    snapshotTimes::Vector{Float64}
     snapshots::Array{Snapshot}
+    nextSnapshot::Float64
 
 
-    function ChargingStation(chargingSpots=Inf, maximumPower=Inf, schedulingPolicy = parallel_policy)
+    function ChargingStation(chargingSpots=Inf, maximumPower=Inf, schedulingPolicy = parallel_policy; snapshots = Float64[])
         trace = DataFrame(  time=0.0, 
                             arrivals=0,
                             occupation = 0,
@@ -44,7 +46,11 @@ mutable struct ChargingStation <: Agent
                             totalEnergyRequested=0.0,
                             totalEnergyDelivered=0.0
                         )
-        new(chargingSpots,maximumPower,schedulingPolicy,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],trace,0,0,0,0,0,0.0,0.0,EVinstance[],Snapshot[])
+        if isempty(snapshots)
+            new(chargingSpots,maximumPower,schedulingPolicy,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],trace,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[], Inf)
+        else
+            new(chargingSpots,maximumPower,schedulingPolicy,snapshots[1],:Snapshot,0,0.0,EVinstance[],EVinstance[],trace,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[],snapshots[1])
+        end
     end
 
 end
@@ -67,6 +73,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
     #FinishedCharge - when a car finishes its energy charge.
     #ChargingFinishedStay - deadline expiration while charging.
     #AlreadyChargedFinishedStay - deadline expiration of already charged vehicle.
+    #Snapshot - must take snapshot
 
     eventType = params[1]
 
@@ -89,7 +96,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
 
         #someone finished its charge within their deadline
         aux,k = findmin([ev.currentWorkload for ev in sta.charging]);
-        @assert isapprox(aux,0.0,atol=1e-8) ":FinishedCharge event with positive energy?"
+        @assert isapprox(aux,0.0,atol=1e-8) "At time $t :FinishedCharge event with positive energy - $aux?"
 
         #Move to already charged
         ev = sta.charging[k];
@@ -135,6 +142,11 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         sta.occupation = sta.occupation - 1
         sta.totalDepartures = sta.totalDepartures + 1
 
+    elseif eventType === :Snapshot
+
+        take_snapshot!(sta,t)
+        sta.snapshotTimes = sta.snapshotTimes[2:end]
+
     end
 
     #After event, update power powerAllocation using the policy and compute nextEventType and timeToNextEvent
@@ -163,8 +175,14 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         nextDepOFF = Inf;
     end
 
+    if isempty(sta.snapshotTimes)
+        nextSnapshot = Inf
+    else
+        nextSnapshot = sta.snapshotTimes[1]-t
+    end
+
     ##Define next event
-    aux,case = findmin([nextCharge,nextDepON,nextDepOFF])
+    aux,case = findmin([nextCharge,nextDepON,nextDepOFF,nextSnapshot])
 
     sta.timeToNextEvent = aux
     if case==1
@@ -173,7 +191,10 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         sta.nextEventType = :ChargingFinishedStay
     elseif case==3
         sta.nextEventType = :AlreadyChargedFinishedStay
+    elseif case==4
+        sta.nextEventType = :Snapshot
     end
+
 
 end
 

@@ -91,7 +91,7 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
 
     #tracing
     trace::DataFrame
-    totalArrivals::Float64
+    totalArrivals::Int64
     totalEnergy::Float64
 
     function TraceArrivalProcess(arrivalTimes::Vector{Float64}, requestedEnergies::Vector{Float64} ,departureTimes::Vector{Float64}, chargingPowers::Vector{Float64})
@@ -105,7 +105,7 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
     function TraceArrivalProcess(data::DataFrame)
 
         sort!(data,:arrivalTimes)
-        new(data[:arrivalTimes], data[:requestedEnergies], data[:departureTimes], data[:chargingPowers])
+        new(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers])
 
     end
 
@@ -114,7 +114,7 @@ end
 #handles the event at time t with type "event"
 function handle_event(arr::TraceArrivalProcess, t::Float64, params...)
     
-    @assert isapprox(arr.timeToNextEvent,0.0,atol=eps()) "Called handle_event in TraceArrivalProcess but nextArrival>0"
+    @assert isapprox(arr.timeToNextEvent,0.0,atol=eps()) "At time $t Called handle_event in TraceArrivalProcess but nextArrival=$(arr.timeToNextEvent)>0"
     arr.totalArrivals = arr.totalArrivals + 1
 
     energy = arr.requestedEnergies[arr.totalArrivals]
@@ -130,7 +130,7 @@ function handle_event(arr::TraceArrivalProcess, t::Float64, params...)
         arr.timeToNextEvent = arr.arrivalTimes[arr.totalArrivals+1] - t
     else
         arr.timeToNextEvent = Inf
-        arr.nextEventType = nothing
+        arr.nextEventType = :nothing
     end
     
 end

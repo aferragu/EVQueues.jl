@@ -11,50 +11,33 @@ function simulate(sim::Simulation, Tfinal::Float64=Inf; snapshots::Vector{Float6
 
     agents=sim.agents
 
-    T=Float64[]
     t=0.0
-    push!(T,t)
 
     isempty(snapshots) ? nextSnapshot = Inf : nextSnapshot = snapshots[1];
 
+    ##agent events
     nextEvents = get_next_event.(agents)
     dt,idx = findmin([u[1] for u in nextEvents])
-    event = nextEvents[idx][2]
-    handler = agents[idx]
-    takeSnap=false
-
-    while t<Tfinal
+    eventType = nextEvents[idx][2]
+    handlerAgent = agents[idx]
+    
+    while t<Tfinal && eventType != :nothing
 
         t=t+dt
-        nextSnapshot = nextSnapshot - dt
-
-        if isapprox(nextSnapshot,0,atol=1e-8) ##Must take snapshot
-            takeSnap=true
-        end
-
+    
         update_state!.(agents, dt)
-        if takeSnap==false
-            handle_event(handler,t,event)
-        end
+        handle_event(handlerAgent,t,eventType)
         trace_state!.(agents,t)
 
+        ##agent events
         nextEvents = get_next_event.(agents)
-        dtEvents,idx = findmin([u[1] for u in nextEvents])
-        event = nextEvents[idx][2]
-        handler = agents[idx]
-    
-        if takeSnap==true
-            ##add snapshot
-            take_snapshot!.(agents,t)
-            snapshots = snapshots[2:end]
-            isempty(snapshots) ? nextSnapshot = Inf : nextSnapshot = snapshots[1];
-            takeSnap=false
-        end
-
-        dt = min(dtEvents,nextSnapshot)
-
+        dt,idx = findmin([u[1] for u in nextEvents])
+        eventType = nextEvents[idx][2]
+        handlerAgent = agents[idx]
+        
         progress = ceil(Integer,t/Tfinal*100);
         ProgressMeter.update!(prog,progress);
+
     end
 
 end
