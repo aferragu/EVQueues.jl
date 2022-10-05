@@ -121,6 +121,7 @@ macro addpolicy(name::String)
         end
 
         export $f1, $f2, $f3
+        export $policy
 
     end)
 end

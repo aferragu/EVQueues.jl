@@ -211,6 +211,7 @@ end
 
 @addpolicy("exact")
 
+#=
 ### MPC peak minimizer policy. Check whether this is needed to reduce dependencies.
 function peak_policy(evs::Array{EVinstance},C::Number)
 
@@ -250,7 +251,7 @@ function peak_policy(evs::Array{EVinstance},C::Number)
 end
 
 @addpolicy("peak")
-
+=#
 
 #### WEIRD POLICIES: These are only for trial purposes. Will be depurated.
 
@@ -339,6 +340,8 @@ function least_loaded_phase(stations::Vector{ChargingStation})
 
 end
 
+export least_loaded_phase
+
 function random_routing(stations::Vector{ChargingStation})
 
     x = [length(sta.charging) for sta in stations]
@@ -351,3 +354,4 @@ function random_routing(stations::Vector{ChargingStation})
     
 end
 
+export random_routing

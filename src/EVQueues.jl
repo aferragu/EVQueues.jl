@@ -1,9 +1,24 @@
 module EVQueues
 
-using ProgressMeter, Distributions, Serialization, JuMP, GLPK, DataFrames, DataStructures
+using ProgressMeter, Distributions, Serialization, DataFrames
 
-export  compute_statistics, get_vehicle_trajectories, compute_fairness, generate_Poisson_stream, ev_sim_trace,
-        EVSim, loadsim, savesim
+export  PoissonArrivalProcess, TraceArrivalProcess,
+        ChargingStation,
+        Router,
+        Simulation,
+        connect!,
+        simulate,
+        EVinstance,
+        Snapshot,
+        ChargingStationStatistics,
+        compute_statistics,
+        get_vehicle_trajectories,
+        compute_fairness,
+        generate_Poisson_stream
+
+
+#compute_statistics, get_vehicle_trajectories, compute_fairness, generate_Poisson_stream, ev_sim_trace,
+ #       EVSim, loadsim, savesim
 
 
 include("types.jl") ##General type definitions
