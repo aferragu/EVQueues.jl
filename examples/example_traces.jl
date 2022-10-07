@@ -15,7 +15,7 @@ arr = TraceArrivalProcess(arrivals,energies,departures,powers)
 
 #Max power
 P=1.0;
-sta = ChargingStation(Inf, P, edf_policy, snapshots=[10.5,12.5])
+sta = ChargingStation(Inf, P, fifo_policy, snapshots=[10.5,12.5])
 
 connect!(arr,sta)
 

@@ -130,7 +130,7 @@ function handle_event(arr::TraceArrivalProcess, t::Float64, params...)
         arr.timeToNextEvent = arr.arrivalTimes[arr.totalArrivals+1] - t
     else
         arr.timeToNextEvent = Inf
-        arr.nextEventType = :nothing
+        arr.nextEventType = :Nothing
     end
     
 end

@@ -5,15 +5,12 @@ mutable struct Simulation
 
 end
 
-function simulate(sim::Simulation, Tfinal::Float64=Inf; snapshots::Vector{Float64} = Float64[])
+function simulate(sim::Simulation, Tfinal::Float64=Inf)
 
     prog=Progress(101, dt=0.5, desc="Simulating... ");
 
     agents=sim.agents
-
     t=0.0
-
-    isempty(snapshots) ? nextSnapshot = Inf : nextSnapshot = snapshots[1];
 
     ##agent events
     nextEvents = get_next_event.(agents)
@@ -21,7 +18,7 @@ function simulate(sim::Simulation, Tfinal::Float64=Inf; snapshots::Vector{Float6
     eventType = nextEvents[idx][2]
     handlerAgent = agents[idx]
     
-    while t<Tfinal && eventType != :nothing
+    while t<Tfinal && eventType != :Nothing
 
         t=t+dt
     

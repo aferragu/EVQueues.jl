@@ -59,6 +59,7 @@ end
 function update_state!(sta::ChargingStation, dt::Float64)
     map(v->update_vehicle(v,dt),sta.charging);
     map(v->update_vehicle(v,dt),sta.alreadyCharged);
+    sta.timeToNextEvent = sta.timeToNextEvent-dt
 end
 
 function trace_state!(sta::ChargingStation, t::Float64)
@@ -185,7 +186,9 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
     aux,case = findmin([nextCharge,nextDepON,nextDepOFF,nextSnapshot])
 
     sta.timeToNextEvent = aux
-    if case==1
+    if aux==Inf
+        sta.nextEventType = :Nothing
+    elseif case==1
         sta.nextEventType = :FinishedCharge
     elseif case==2
         sta.nextEventType = :ChargingFinishedStay

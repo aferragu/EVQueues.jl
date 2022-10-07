@@ -69,7 +69,7 @@ end
 ### FIFO. It's a priority policy with arrival time as priority vector.
 function fifo_policy(evs::Array{EVinstance},C::Number)
 
-    perm = 1:length(evs)
+    perm = collect(1:length(evs))
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 end
