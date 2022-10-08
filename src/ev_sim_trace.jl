@@ -32,11 +32,11 @@ function ev_sim_trace(arrivalTimes::Vector{Float64},
     )
 
     arr = TraceArrivalProcess(arrivalTimes,requestedEnergies,departureTimes,chargingPowers)
-    sta = ChargingStation(Inf,C,policy)
+    sta = ChargingStation(Inf,C,policy; snapshots=snapshots)
     connect!(arr,sta)
     sim = Simulation([arr,sta],params)
 
-    simulate(sim, Tfinal; snapshots=snapshots)
+    simulate(sim, Tfinal)
     return sim
 
 end

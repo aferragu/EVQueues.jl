@@ -18,11 +18,11 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
 
     #Proceso de arribos
     arr = PoissonArrivalProcess(lambda,work_rng,laxity_rng,1.0)
-    sta = ChargingStation(Inf,C,policy)
+    sta = ChargingStation(Inf,C,policy; snapshots=snapshots)
     connect!(arr,sta)
     sim = Simulation([arr,sta], params)
 
-    simulate(sim, Tfinal; snapshots=snapshots)
+    simulate(sim, Tfinal)
     return sim
     
 end
