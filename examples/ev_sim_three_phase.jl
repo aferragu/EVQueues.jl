@@ -1,10 +1,14 @@
-using EVQueues, Distributions
+using EVQueues, Distributions, Plots
 
 function routing_by_free_spaces(phases::Vector{ChargingStation})
 
     free_spaces = map(phase->phase.chargingSpots-phase.occupation, phases)
-    _,idx = findmin(free_spaces)
-    return idx
+    if sum(free_spaces)>0
+        d = Categorical(free_spaces/sum(free_spaces))
+        return rand(d)
+    else
+        return rand(DiscreteUniform(1,3))
+    end
     
 end
 
@@ -14,12 +18,12 @@ function random_routing(phases::Vector{ChargingStation})
     return rand(d)
 end
 
-lambda=30.0
+lambda=40.0
 C = [15;15;15] #tot 45 chargers
 
 mu=1.0
-gamma=1000000
-Tfinal=500.0
+gamma=10000000
+Tfinal=10000.0
 
 
 params = Dict(
@@ -36,7 +40,7 @@ laxity_rng=Exponential(1.0/gamma);
 
 arr = PoissonArrivalProcess(lambda,work_rng,laxity_rng,1.0)
 
-rtr = Router(random_routing)
+rtr = Router(routing_by_free_spaces)
 
 connect!(arr,rtr)
 
