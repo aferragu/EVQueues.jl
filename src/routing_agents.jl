@@ -30,10 +30,6 @@ function connect!(rtr::Router,agents...)
     push!(rtr.routedEnergy, zeros(length(agents))...)
 end
 
-function update_state!(rtr::Router, dt::Float64)
-    rtr.timeToNextEvent = rtr.timeToNextEvent-dt
-end
-
 function trace_state!(rtr::Router,t::Float64)
     push!(rtr.trace, [t,rtr.totalArrivals, rtr.totalEnergy, rtr.routedArrivals, rtr.routedEnergy])
 end

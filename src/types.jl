@@ -5,6 +5,11 @@ function get_next_event(agent::Agent)::Tuple{Float64,Symbol}
     return agent.timeToNextEvent, agent.nextEventType
 end
 
+#update state after dt time units (redefine if necessary)
+function update_state!(agent::Agent, dt::Float64)
+    agent.timeToNextEvent = agent.timeToNextEvent-dt
+end
+
 function take_snapshot!(agent::Agent,t::Float64)
     #do nothing unless redefined
 end

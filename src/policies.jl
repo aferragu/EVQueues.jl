@@ -36,7 +36,7 @@ end
 ### Earliest Deadline first.
 function edf_policy(evs::Array{EVinstance},C::Number)
 
-    deadlines = deadline.(evs)
+    deadlines = [ev.currentDeadline for ev in evs]
     perm = sortperm(deadlines);
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
@@ -47,7 +47,7 @@ end
 ### Least laxity first
 function llf_policy(evs::Array{EVinstance},C::Number)
 
-    laxities = laxity.(evs)
+    laxities = [ev.currentDeadline - ev.currentWorkload/ev.chargingPower for ev in evs]
     perm = sortperm(laxities);
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})

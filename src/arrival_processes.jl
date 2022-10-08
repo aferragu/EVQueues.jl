@@ -5,11 +5,6 @@ function connect!(arr::ArrivalProcess, a::Agent)
     arr.sink = a
 end
 
-#update state after dt time units
-function update_state!(arr::ArrivalProcess, dt::Float64)
-    arr.timeToNextEvent = arr.timeToNextEvent-dt
-end
-
 function trace_state!(arr::ArrivalProcess, t::Float64)
     push!(arr.trace, [t,arr.totalArrivals, arr.totalEnergy])
 end
