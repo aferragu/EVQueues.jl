@@ -22,21 +22,20 @@ lambda=40.0
 C = [15;15;15] #tot 45 chargers
 
 mu=1.0
-gamma=10000000
-Tfinal=10000.0
+Tfinal=500.0
 
 
 params = Dict(
     "ArrivalRate" => lambda,
     "AvgEnergy" => 1.0/mu,
-    "AvgDeadline" => 1.0/mu + 1.0/gamma,
+    "AvgDeadline" => 1.0/mu,
     "SimTime" => Tfinal,
     "Capacity" => C,
 )
 
 #variables aleatorias de los clientes
 work_rng=Exponential(1.0/mu);
-laxity_rng=Exponential(1.0/gamma);
+laxity_rng=Dirac(0.0);
 
 arr = PoissonArrivalProcess(lambda,work_rng,laxity_rng,1.0)
 
