@@ -1,7 +1,9 @@
 mutable struct Simulation
 
-    agents::Array{EVQueues.Agent}
+    agents::Array{Agent}
     parameters::Dict
+
+    Simulation(agents::Array{Agent})  = new(agents,Dict())
 
 end
 

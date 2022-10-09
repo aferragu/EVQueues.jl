@@ -19,7 +19,7 @@ sta = ChargingStation(Inf, P, fifo_policy, snapshots=[10.5,12.5])
 
 connect!(arr,sta)
 
-sim = Simulation([arr,sta], Dict())
+sim = Simulation([arr,sta])
 
 #Simulate
 simulate(sim)

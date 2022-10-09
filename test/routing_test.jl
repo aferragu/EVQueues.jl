@@ -25,7 +25,7 @@ sta1 = ChargingStation(Inf,1.0, edf_policy)
 sta2 = ChargingStation(Inf,1.0, edf_policy)
 connect!(rtr,sta1,sta2)
 
-sim = Simulation([arr,rtr,sta1,sta2], Dict())
+sim = Simulation([arr,rtr,sta1,sta2])
 
 simulate(sim)
 
