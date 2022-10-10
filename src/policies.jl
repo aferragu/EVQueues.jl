@@ -283,9 +283,20 @@ export least_loaded_phase_routing
 
 function random_routing(stations::Vector{ChargingStation})
 
+    return rand(DiscreteUniform(1,length(stations)))
+    
+end
+
+export random_routing
+
+function free_spaces_routing(stations::Vector{ChargingStation})
+
+    @assert sum([sta.chargingSpots for sta in stations])<Inf "Free spaces routing requiere finite-capacity stations, found $([sta.chargingSpots for sta in stations])"
+
     free = [sta.chargingSpots - sta.occupation for sta in stations]
 
     if sum(free)>0
+        println(free)
         p = free/sum(free)
         d = Categorical(p)
         return rand(d)
@@ -295,4 +306,4 @@ function random_routing(stations::Vector{ChargingStation})
     
 end
 
-export random_routing
+export free_spaces_routing
