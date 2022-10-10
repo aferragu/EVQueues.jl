@@ -15,6 +15,7 @@ export  PoissonArrivalProcess, TraceArrivalProcess,
         get_vehicle_trajectories,
         compute_fairness,
         generate_Poisson_stream,
+        sort_completed_vehicles,
         loadsim,
         savesim
 

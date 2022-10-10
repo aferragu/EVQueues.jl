@@ -162,6 +162,13 @@ function generate_Poisson_stream(lambda,mu,gamma,Tfinal)
     return df
 end
 
+function sort_completed_vehicles(evs::Vector{EVinstance})
+
+    arr_times = [ev.arrivalTime for ev in evs]
+    perm = sortperm(arr_times)
+    return evs[perm]
+
+end
 
 function Base.show(ev::EVinstance)
 
