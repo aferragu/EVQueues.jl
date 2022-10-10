@@ -296,7 +296,6 @@ function free_spaces_routing(stations::Vector{ChargingStation})
     free = [sta.chargingSpots - sta.occupation for sta in stations]
 
     if sum(free)>0
-        println(free)
         p = free/sum(free)
         d = Categorical(p)
         return rand(d)
