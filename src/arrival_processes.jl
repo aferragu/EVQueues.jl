@@ -100,7 +100,7 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
     function TraceArrivalProcess(data::DataFrame)
 
         sort!(data,:arrivalTimes)
-        new(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers])
+        TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers])
 
     end
 

@@ -11,7 +11,7 @@ powers = [1.0;1.0;1.0];
 
 data = DataFrame(:arrivalTimes => arrivals, :departureTimes => departures, :requestedEnergies => energies, :chargingPowers => powers)
 
-arr = TraceArrivalProcess(arrivals,energies,departures,powers)
+arr = TraceArrivalProcess(data)
 
 #Max power
 P=1.0;
