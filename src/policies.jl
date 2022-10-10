@@ -131,6 +131,19 @@ end
 
 @addpolicy("lrpt")
 
+#max weight policy where weight is minimum between rem. work and rem. deadline
+function mw_policy(evs::Array{EVinstance},C::Number)
+
+    remaining_w = [ev.currentWorkload for ev in evs];
+    remaining_d = [ev.currentReportedDeadline for ev in evs];
+
+    weights = min.(remaining_w,remaining_d)
+    perm = sortperm(weights,rev=true);
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+end
+
+@addpolicy("mw")
 
 ### Non-priority based policies
 
@@ -189,7 +202,6 @@ end
 
 @addpolicy("pf")
 
-
 ### Exact scheduling.
 function exact_policy(evs::Array{EVinstance},C::Number)
 
@@ -211,40 +223,9 @@ end
 
 @addpolicy("exact")
 
-#### WEIRD POLICIES: These are only for trial purposes. Will be depurated.
-
-#max weight policy where weight is minimum between rem. work and rem. deadline
-function mw_policy(evs::Array{EVinstance},C::Number)
-
-    remaining_w = [ev.currentWorkload for ev in evs];
-    remaining_d = [ev.currentReportedDeadline for ev in evs];
-
-    weights = min.(remaining_w,remaining_d)
-    perm = sortperm(weights,rev=true);
-
-    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
-end
-
-@addpolicy("mw")
-
-#this policy comes from maximizing myopically the potential amount of work one can perform, ignoring future arrivals
-#it underload it behaves exactly as exact scheduling!
-function weird_policy(evs::Array{EVinstance},C::Number)
-
-    perm = sortperm([ev.currentReportedDeadline for ev in evs], rev=true)
-
-    remaining_w = [ev.currentWorkload for ev in evs];
-    remaining_d = [ev.currentReportedDeadline for ev in evs];
-
-    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
-end
-
-@addpolicy("weird")
-
-
 ### Curtailed policies (for reported deadlines)
-function edfc_policy(evs::Array{EVinstance},C::Number)
 
+function edfc_policy(evs::Array{EVinstance},C::Number)
 
     deadlines = [ev.currentReportedDeadline for ev in evs];
 
@@ -289,26 +270,28 @@ end
 ###
 #######################################################################
 
-function least_loaded_phase(stations::Vector{ChargingStation})
+function least_loaded_phase_routing(stations::Vector{ChargingStation})
 
     x = [length(sta.charging) for sta in stations]
 
-    aux,i = findmin(x)
-    return i
+    _,idx = findmin(x)
+    return idx
 
 end
 
-export least_loaded_phase
+export least_loaded_phase_routing
 
 function random_routing(stations::Vector{ChargingStation})
 
-    x = [length(sta.charging) for sta in stations]
     free = [sta.chargingSpots - sta.occupation for sta in stations]
 
-    p = free/sum(free)
-    d = Categorical(p)
-    i = rand(d)
-    return i
+    if sum(free)>0
+        p = free/sum(free)
+        d = Categorical(p)
+        return rand(d)
+    else
+        return rand(DiscreteUniform(1,length(stations)))
+    end
     
 end
 
