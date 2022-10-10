@@ -3,6 +3,8 @@ mutable struct Simulation
     agents::Array{Agent}
     parameters::Dict
 
+    Simulation(agents::Array{Agent}, params::Dict) = new(agents,params)
+
     Simulation(agents::Array{Agent})  = new(agents,Dict())
 
 end

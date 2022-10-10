@@ -36,7 +36,7 @@ mutable struct ChargingStation <: Agent
         trace = DataFrame(  time=0.0, 
                             arrivals=0,
                             occupation = 0,
-                            currentPower = 0, 
+                            currentPower = 0.0, 
                             currentCharging=0,
                             currentAlreadyCharged=0,
                             totalCompletedCharges=0,

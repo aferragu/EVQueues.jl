@@ -211,48 +211,6 @@ end
 
 @addpolicy("exact")
 
-#=
-### MPC peak minimizer policy. Check whether this is needed to reduce dependencies.
-function peak_policy(evs::Array{EVinstance},C::Number)
-
-    U=zeros(length(evs));
-
-    idx = sortperm([ev.currentReportedDeadline for ev in evs]);
-
-    sigma = [ev.currentWorkload for ev in evs][idx];
-    tau = [ev.currentReportedDeadline for ev in evs][idx];
-    deltat=diff([0;tau]);
-    power = [ev.chargingPower for ev in evs][idx];
-    n=length(evs);
-
-    m=Model(GLPK.Optimizer)
-
-    @variable(m,x[1:n,1:n]>=0)
-    @variable(m,auxvar)
-
-    @constraint(m,[i=1:n,j=i+1:n],x[i,j]==0)
-
-    @constraint(m,[i=1:n,j=1:i],x[i,j]<=power[i])
-    @constraint(m,[i=1:n],sum(x[i,:].*deltat)==sigma[i])
-    @constraint(m,sum(x,dims=1).<=auxvar)
-
-    @objective(m,Min,auxvar)
-
-    solve(m)
-
-    U[idx] = max.(getvalue(x)[:,1],0.0);
-
-    for i=1:length(evs)
-        evs[i].currentPower = U[i]
-    end
-
-    return sum(U);
-
-end
-
-@addpolicy("peak")
-=#
-
 #### WEIRD POLICIES: These are only for trial purposes. Will be depurated.
 
 #max weight policy where weight is minimum between rem. work and rem. deadline
