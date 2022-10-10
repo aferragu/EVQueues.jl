@@ -77,31 +77,3 @@ mutable struct ChargingStationStatistics
     avgW::Float64       #average unfinished workload (taking finished into account)
     pB::Float64         #nlocking probability
 end
-
-
-#=
-mutable struct TimeTrace
-    T::Vector{Float64}          #event times
-    X::Vector{UInt16}           #charging vehicles
-    Y::Vector{UInt16}           #already charged
-    P::Vector{Float64}          #used power
-end
-
-#defino la estructura resultados de simulacion
-mutable struct EVSim
-    parameters::Dict
-    timetrace::TimeTrace
-    EVs::Vector{EVinstance}
-    snapshots::Vector{Snapshot}
-    stats::SimStatistics
-end
-
-#defino la estructura resultados de simulacion
-mutable struct EVSimParallel
-    parameters::Dict
-    timetrace::Vector{TimeTrace}
-    EVs::Vector{Vector{EVinstance}}
-    snapshots::Vector{Vector{Snapshot}}
-    stats::Vector{SimStatistics}
-end
-=#

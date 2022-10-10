@@ -1,6 +1,3 @@
-### The following code defines all the policies that can be used in the simulator
-
-
 #######################################################################
 ###
 ### Scheduling policies
@@ -57,7 +54,7 @@ end
 
 function llr_policy(evs::Array{EVinstance},C::Number)
 
-    relative_laxities = [ev.currentReportedDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
+    relative_laxities = [ev.currentDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
     perm = sortperm(relative_laxities);
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
@@ -89,7 +86,7 @@ end
 ### LAR: least attained ratio
 function lar_policy(evs::Array{EVinstance},C::Number)
 
-    relative_attained = [(ev.departureTime-ev.arrivalTime-ev.currentReportedDeadline)*ev.chargingPower/ev.currentWorkload for ev in evs];
+    relative_attained = [(ev.departureTime-ev.arrivalTime-ev.currentDeadline)*ev.chargingPower/ev.currentWorkload for ev in evs];
     perm = sortperm(relative_attained,rev=true);
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
@@ -135,7 +132,7 @@ end
 function mw_policy(evs::Array{EVinstance},C::Number)
 
     remaining_w = [ev.currentWorkload for ev in evs];
-    remaining_d = [ev.currentReportedDeadline for ev in evs];
+    remaining_d = [ev.currentDeadline for ev in evs];
 
     weights = min.(remaining_w,remaining_d)
     perm = sortperm(weights,rev=true);
@@ -166,7 +163,7 @@ function pf_policy(evs::Array{EVinstance},C::Number)
 
     ##TODO Revisar comput_pf. Parece estar bien.
     workloads = [ev.currentWorkload for ev in evs];
-    deadlines = [ev.currentReportedDeadline for ev in evs];
+    deadlines = [ev.currentDeadline for ev in evs];
     U=compute_pf(workloads,deadlines,C)
 
     for i=1:length(evs)
@@ -206,7 +203,7 @@ end
 function exact_policy(evs::Array{EVinstance},C::Number)
 
     #exact scheduling o potencia maxima
-    U = [min(ev.currentWorkload/ev.currentReportedDeadline,ev.chargingPower) for ev in evs];
+    U = [min(ev.currentWorkload/ev.currentDeadline,ev.chargingPower) for ev in evs];
 
     #curtailing si me paso de C
     if sum(U)>C
@@ -223,19 +220,30 @@ end
 
 @addpolicy("exact")
 
-### Curtailed policies (for reported deadlines)
+### Policies that use reported deadlines instead of deadline
+
+function edfu_policy(evs::Array{EVinstance},C::Number)
+
+    deadlines = [ev.currentReportedDeadline for ev in evs];
+    perm = sortperm(deadlines);
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+
+end
+
+@addpolicy("edfu")
 
 function edfc_policy(evs::Array{EVinstance},C::Number)
 
     deadlines = [ev.currentReportedDeadline for ev in evs];
 
-    positivas = findall(deadlines.>0)
-    negativas = findall(deadlines.<=0)
+    pending = findall(deadlines.>0)
+    expired = findall(deadlines.<=0)
 
-    perm1 = sortperm(deadlines[positivas]);
-    perm2 = sortperm(deadlines[negativas], rev=true);
+    perm1 = sortperm(deadlines[pending]);
+    perm2 = sortperm(deadlines[expired], rev=true);
 
-    perm = [positivas[perm1];negativas[perm2]]
+    perm = [pending[perm1];expired[perm2]]
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 
@@ -243,19 +251,29 @@ end
 
 @addpolicy("edfc")
 
-function llfc_policy(evs::Array{EVinstance},C::Number)
+function llfu_policy(evs::Array{EVinstance},C::Number)
 
+    laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
+    perm = sortperm(laxities);
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+
+end
+
+@addpolicy("llfu")
+
+function llfc_policy(evs::Array{EVinstance},C::Number)
 
     deadlines = [ev.currentReportedDeadline for ev in evs];
     laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
 
-    positivas = findall(deadlines.>0)
-    negativas = findall(deadlines.<=0)
+    pending = findall(deadlines.>0)
+    expired = findall(deadlines.<=0)
 
-    perm1 = sortperm(laxities[positivas]);
-    perm2 = sortperm(laxities[negativas], rev=true);
+    perm1 = sortperm(laxities[pending]);
+    perm2 = sortperm(laxities[expired], rev=true);
 
-    perm = [positivas[perm1];negativas[perm2]]
+    perm = [pending[perm1];expired[perm2]]
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 

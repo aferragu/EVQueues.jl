@@ -90,7 +90,6 @@ end
 macro addpolicy(name::String)
     f1 = Symbol("ev_",name);
     f2 = Symbol("ev_",name,"_trace");
-    f3 = Symbol("ev_",name,"_uncertain");
     policy = Symbol(name,"_policy");
     eval( quote
 
@@ -108,11 +107,7 @@ macro addpolicy(name::String)
             ev_sim_trace(df,$policy,C,snapshots)
         end
 
-        function $f3(lambda,mu,gamma,Tfinal,C=Inf,uncertainity_paramter=0.0;snapshots=[Inf])
-            ev_sim_uncertain(lambda,mu,gamma,Tfinal,C,$policy,uncertainity_paramter,snapshots)
-        end
-
-        export $f1, $f2, $f3
+        export $f1, $f2
         export $policy
 
     end)
