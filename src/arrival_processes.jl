@@ -177,10 +177,10 @@ function handle_event(arr::PoissonUncertainArrivalProcess, t::Float64, params...
     end
     
     laxity = rand(arr.initialLaxity)
-    departure = t +energy/power + laxity
+    departure = t + energy/power + laxity
 
     uncertainty_value = rand(arr.uncertainty)
-    newEV = EVinstance(t,departure,departure+uncertainty_value,energy,power)
+    newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = departure+uncertainty_value)
 
     handle_event(arr.sink, t, :Arrival, newEV)
     arr.timeToNextEvent = rand(Exponential(1/arr.intensity))

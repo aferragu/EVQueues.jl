@@ -33,31 +33,16 @@ mutable struct EVinstance
     EVinstance( arrivalTime::Float64,
                 departureTime::Float64,
                 requestedEnergy::Float64,
-                chargingPower::Float64) = new(  arrivalTime,
-                                                departureTime,
-                                                departureTime,
-                                                requestedEnergy,
-                                                chargingPower,
-                                                requestedEnergy,
-                                                departureTime-arrivalTime,
-                                                departureTime-arrivalTime,
-                                                0.0,NaN,NaN)
-
-    #este segundo constructor me deja llenar el reportedDepartureTime
-    #en particular el valor de currentReportedDeadline se calcula con lo el reportado
-    EVinstance( arrivalTime::Float64,
-                departureTime::Float64,
-                reportedDepartureTime::Float64,
-                requestedEnergy::Float64,
-                chargingPower::Float64) = new(  arrivalTime,
-                                                departureTime,
-                                                reportedDepartureTime,
-                                                requestedEnergy,
-                                                chargingPower,
-                                                requestedEnergy,
-                                                departureTime-arrivalTime,
-                                                reportedDepartureTime-arrivalTime,
-                                                0.0,NaN,NaN)
+                chargingPower::Float64;
+                reportedDepartureTime=reportedDeparture::Float64=NaN) = new(arrivalTime,
+                                                                            departureTime,
+                                                                            reportedDepartureTime,
+                                                                            requestedEnergy,
+                                                                            chargingPower,
+                                                                            requestedEnergy,
+                                                                            departureTime-arrivalTime,
+                                                                            reportedDepartureTime-arrivalTime,
+                                                                            0.0,NaN,NaN)
 end
 
 mutable struct Snapshot
