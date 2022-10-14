@@ -8,7 +8,7 @@ function peak_policy(evs::Array{EVinstance},C::Number)
     idx = sortperm([ev.currentReportedDeadline for ev in evs]);
 
     sigma = [ev.currentWorkload for ev in evs][idx];
-    tau = [ev.currentReportedDeadline for ev in evs][idx];
+    tau = [ev.currentDeadline for ev in evs][idx];
     deltat=diff([0;tau]);
     power = [ev.chargingPower for ev in evs][idx];
     n=length(evs);
