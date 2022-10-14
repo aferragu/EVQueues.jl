@@ -97,6 +97,7 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
     requestedEnergies::Vector{Float64}
     departureTimes::Vector{Float64}
     chargingPowers::Vector{Float64}
+    reportedDepartureTimes::Vector{Float64}
 
     #sink
     sink::Union{Agent, Nothing}
@@ -110,18 +111,32 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
     totalArrivals::Int64
     totalEnergy::Float64
 
-    function TraceArrivalProcess(arrivalTimes::Vector{Float64}, requestedEnergies::Vector{Float64} ,departureTimes::Vector{Float64}, chargingPowers::Vector{Float64})
+    function TraceArrivalProcess(   arrivalTimes::Vector{Float64}, 
+                                    requestedEnergies::Vector{Float64},
+                                    departureTimes::Vector{Float64}, 
+                                    chargingPowers::Vector{Float64};
+                                    reportedDepartureTimes::Vector{Float64} = Float64[])
 
         @assert issorted(arrivalTimes) "Arrival times must be sorted"
         trace = DataFrame(time=[0.0], totalArrivals=[0.0], totalEnergy=[0.0])
-        new(arrivalTimes, requestedEnergies, departureTimes, chargingPowers, nothing, arrivalTimes[1],:Arrival,trace,0.0,0.0)
+
+        if isempty(reportedDepartureTimes)
+            arr = new(arrivalTimes, requestedEnergies, departureTimes, chargingPowers, departureTimes, nothing, arrivalTimes[1],:Arrival,trace,0.0,0.0)
+        else
+            arr = new(arrivalTimes, requestedEnergies, departureTimes, chargingPowers, reportedDepartureTimes, nothing, arrivalTimes[1],:Arrival,trace,0.0,0.0)
+        end
 
     end
 
     function TraceArrivalProcess(data::DataFrame)
 
         sort!(data,:arrivalTimes)
-        TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers])
+        if columnindex(data, :reportedDepartureTimes) == 0
+            arr = TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers])
+        else
+            arr = TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers]; reportedDepartureTimes = data[!,:reportedDepartureTimes])
+        end
+        return arr
 
     end
 
@@ -136,10 +151,12 @@ function handle_event(arr::TraceArrivalProcess, t::Float64, params...)
     energy = arr.requestedEnergies[arr.totalArrivals]
     power = arr.chargingPowers[arr.totalArrivals]
     departure = arr.departureTimes[arr.totalArrivals]
+    reportedDeparture = arr.reportedDepartureTimes[arr.totalArrivals]
+
 
     arr.totalEnergy = arr.totalEnergy + energy
 
-    newEV = EVinstance(t,departure,energy,power)
+    newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = reportedDeparture)
     handle_event(arr.sink, t, :Arrival, newEV)
     
     if arr.totalArrivals < length(arr.arrivalTimes)
