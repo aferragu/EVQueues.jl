@@ -17,7 +17,7 @@ function ev_sim(lambda,mu,gamma,Tfinal,C,policy,snapshots=[Inf])
     laxity_rng=Exponential(1.0/gamma);
 
     #Proceso de arribos
-    arr = PoissonArrivalProcess(lambda,work_rng,laxity_rng,1.0)
+    arr = PoissonArrivalProcess(lambda,work_rng,1.0; initialLaxity = laxity_rng)
     sta = ChargingStation(Inf,C,policy; snapshots=snapshots)
     connect!(arr,sta)
     sim = Simulation([arr,sta], params)

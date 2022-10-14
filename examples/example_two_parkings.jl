@@ -42,7 +42,7 @@ params = Dict(
 work_rng=Exponential(1.0/mu);
 laxity_rng=Exponential(1.0/gamma);
 
-arr = PoissonArrivalProcess(lambda,work_rng,laxity_rng,1.0)
+arr = PoissonArrivalProcess(lambda,work_rng,1.0; initialLaxity = laxity_rng)
 rtr = Router(routing_policy)
 
 connect!(arr,rtr)

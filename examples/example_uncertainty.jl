@@ -9,17 +9,14 @@ C=Inf;
 P=30.0
 Tfinal=500.0;
 
-#variables aleatorias de los clientes
 work_rng=Exponential(1.0/mu);
 laxity_rng=Exponential(1.0/gamma);
-uncertainity_rng=Normal(0.0,sigma);
+uncertainty_rng=Normal(0.0,sigma)
 
-#Proceso de arribos
-arr = PoissonUncertainArrivalProcess(lambda,work_rng,laxity_rng,uncertainity_rng,1.0)
+arr = PoissonArrivalProcess(lambda,work_rng,1.0; initialLaxity = laxity_rng, uncertainty = uncertainty_rng)
 sta = ChargingStation(C,P,edfc_policy; snapshots=[Tfinal])
 connect!(arr,sta)
 
-#guardo parametros
 params = Dict(
     "ArrivalRate" => lambda,
     "AvgEnergy" => 1.0/mu,

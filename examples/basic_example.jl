@@ -12,7 +12,7 @@ work_distribution = Exponential(1/mu)
 laxity_distribution = Exponential(1/gamma)
 
 #Agents
-arr = PoissonArrivalProcess(lambda, work_distribution, laxity_distribution, 1.0)
+arr = PoissonArrivalProcess(lambda, work_distribution, 1.0; initialLaxity = laxity_distribution)
 sta = ChargingStation(C, P, edf_policy, snapshots=[Tfinal])
 connect!(arr,sta)
 
