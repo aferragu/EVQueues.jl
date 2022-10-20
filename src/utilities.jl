@@ -152,10 +152,15 @@ function get_policy_name(policy::Function)
 
 end
 
-##Genera una traza de arribos Poisson como la que se usa en ev_sim para pasarle
-#al ev_sim_trace. De este modo se puede fijar la traza de vehiculos. Devuelve un
-#dataframe de arribos.
-function generate_Poisson_stream(lambda,mu,gamma,Tfinal)
+"""
+function generate_Poisson_stream(lambda::Float64,mu::Float64,gamma::Float64,Tfinal::Float64)
+
+
+Generates a DataFrame with a Poisson Arrival process up to time Tfinal. Returns a DataFrame with arrival times, exponential requested energies of parameter mu and exponential initial laxities of parameter gamma.
+
+The generated DataFrane can be used to construct a TraceArrivalProcess with a given Poisson input. Useful if one wants to test different policies in a Poisson setting but with the same arrival pattern.
+"""
+function generate_Poisson_stream(lambda::Float64,mu::Float64,gamma::Float64,Tfinal::Float64)
 
     t=0.0
     arr = Exponential(1/lambda)
@@ -188,6 +193,11 @@ function generate_Poisson_stream(lambda,mu,gamma,Tfinal)
     return df
 end
 
+"""
+function sort_completed_vehicles(evs::Vector{EVinstance})
+
+Sort vehicles by arrival time in a Vector of EVinstances.
+"""
 function sort_completed_vehicles(evs::Vector{EVinstance})
 
     arr_times = [ev.arrivalTime for ev in evs]
@@ -231,12 +241,22 @@ function Base.show(sim::Simulation)
 
 end
 
+"""
+function savesim(sim::Simulation, file::String)
+
+    Saves simulation to a file.
+"""
 function savesim(sim::Simulation, file::String)
     io=open(file,"w");
     serialize(io,sim);
     close(io);
 end
 
+"""
+function loadsim(file::String)
+
+    Load simulation from a file.
+"""
 function loadsim(file::String)
     io=open(file,"r");
     sim::Simulation = deserialize(io);
