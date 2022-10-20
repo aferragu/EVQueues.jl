@@ -83,7 +83,7 @@ end
 
 @testset "Routing policies Test" begin
     
-    @test simple_test_routing(EVQueues.least_loaded_phase_routing) == [2,1]
+    @test simple_test_routing(EVQueues.least_loaded_routing) == [2,1]
     @test simple_test_routing(EVQueues.random_routing) == [3,0]
     @test simple_test_routing(EVQueues.free_spaces_routing) == [2,1]
     
