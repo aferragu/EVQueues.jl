@@ -1,7 +1,8 @@
-### The following code defines all the policies that can be used in the simulator
-
-
-
+#######################################################################
+###
+### Scheduling policies
+###
+#######################################################################
 
 ### A large family of policies are priority policies (based on a priority rule
 ### such as order of arrival, deadline order, etc)
@@ -32,7 +33,7 @@ end
 ### Earliest Deadline first.
 function edf_policy(evs::Array{EVinstance},C::Number)
 
-    deadlines = [ev.currentReportedDeadline for ev in evs];
+    deadlines = [ev.currentDeadline for ev in evs]
     perm = sortperm(deadlines);
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
@@ -43,7 +44,7 @@ end
 ### Least laxity first
 function llf_policy(evs::Array{EVinstance},C::Number)
 
-    laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
+    laxities = [ev.currentDeadline - ev.currentWorkload/ev.chargingPower for ev in evs]
     perm = sortperm(laxities);
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
@@ -51,9 +52,10 @@ end
 
 @addpolicy("llf")
 
+### Least laxity ratio (Zeballos et al 2019)
 function llr_policy(evs::Array{EVinstance},C::Number)
 
-    relative_laxities = [ev.currentReportedDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
+    relative_laxities = [ev.currentDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
     perm = sortperm(relative_laxities);
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
@@ -61,18 +63,17 @@ end
 
 @addpolicy("llr")
 
-
 ### FIFO. It's a priority policy with arrival time as priority vector.
 function fifo_policy(evs::Array{EVinstance},C::Number)
 
-    perm = 1:length(evs)
+    perm = collect(1:length(evs))
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 end
 
 @addpolicy("fifo")
 
-### FIFO. It's a priority policy with reversed arrival time as priority vector.
+### LIFO. It's a priority policy with reversed arrival time as priority vector.
 function lifo_policy(evs::Array{EVinstance},C::Number)
 
     perm = collect(length(evs):-1:1)
@@ -85,7 +86,7 @@ end
 ### LAR: least attained ratio
 function lar_policy(evs::Array{EVinstance},C::Number)
 
-    relative_attained = [(ev.departureTime-ev.arrivalTime-ev.currentReportedDeadline)*ev.chargingPower/ev.currentWorkload for ev in evs];
+    relative_attained = [(ev.departureTime-ev.arrivalTime-ev.currentDeadline)*ev.chargingPower/ev.currentWorkload for ev in evs];
     perm = sortperm(relative_attained,rev=true);
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
@@ -115,7 +116,6 @@ end
 
 @addpolicy("ratio")
 
-
 ### LRPT: Largest remaining processing tiem
 function lrpt_policy(evs::Array{EVinstance},C::Number)
 
@@ -127,6 +127,19 @@ end
 
 @addpolicy("lrpt")
 
+#max weight policy where weight is minimum between rem. work and rem. deadline
+function mw_policy(evs::Array{EVinstance},C::Number)
+
+    remaining_w = [ev.currentWorkload for ev in evs];
+    remaining_d = [ev.currentDeadline for ev in evs];
+
+    weights = min.(remaining_w,remaining_d)
+    perm = sortperm(weights,rev=true);
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+end
+
+@addpolicy("mw")
 
 ### Non-priority based policies
 
@@ -143,13 +156,12 @@ end
 
 @addpolicy("parallel")
 
-
 ### Proportional fairness policy
 function pf_policy(evs::Array{EVinstance},C::Number)
 
     ##TODO Revisar comput_pf. Parece estar bien.
     workloads = [ev.currentWorkload for ev in evs];
-    deadlines = [ev.currentReportedDeadline for ev in evs];
+    deadlines = [ev.currentDeadline for ev in evs];
     U=compute_pf(workloads,deadlines,C)
 
     for i=1:length(evs)
@@ -159,6 +171,7 @@ function pf_policy(evs::Array{EVinstance},C::Number)
     return sum(U);
 end
 
+## helper function to compute the proportional fair allocation
 function compute_pf(workloads,deadlines,C)
 
     w=workloads./deadlines;
@@ -185,12 +198,11 @@ end
 
 @addpolicy("pf")
 
-
-### Exact scheduling.
+### Exact scheduling (Nakahira et al 2018)
 function exact_policy(evs::Array{EVinstance},C::Number)
 
     #exact scheduling o potencia maxima
-    U = [min(ev.currentWorkload/ev.currentReportedDeadline,ev.chargingPower) for ev in evs];
+    U = [min(ev.currentWorkload/ev.currentDeadline,ev.chargingPower) for ev in evs];
 
     #curtailing si me paso de C
     if sum(U)>C
@@ -207,91 +219,32 @@ end
 
 @addpolicy("exact")
 
-### MPC peak minimizer policy. Check whether this is needed to reduce dependencies.
-function peak_policy(evs::Array{EVinstance},C::Number)
+### Policies that use reported deadlines instead of deadline
 
-    U=zeros(length(evs));
+### EDF policy based on reported deadlines
+function edfu_policy(evs::Array{EVinstance},C::Number)
 
-    idx = sortperm([ev.currentReportedDeadline for ev in evs]);
-
-    sigma = [ev.currentWorkload for ev in evs][idx];
-    tau = [ev.currentReportedDeadline for ev in evs][idx];
-    deltat=diff([0;tau]);
-    power = [ev.chargingPower for ev in evs][idx];
-    n=length(evs);
-
-    m=Model(GLPK.Optimizer)
-
-    @variable(m,x[1:n,1:n]>=0)
-    @variable(m,auxvar)
-
-    @constraint(m,[i=1:n,j=i+1:n],x[i,j]==0)
-
-    @constraint(m,[i=1:n,j=1:i],x[i,j]<=power[i])
-    @constraint(m,[i=1:n],sum(x[i,:].*deltat)==sigma[i])
-    @constraint(m,sum(x,dims=1).<=auxvar)
-
-    @objective(m,Min,auxvar)
-
-    solve(m)
-
-    U[idx] = max.(getvalue(x)[:,1],0.0);
-
-    for i=1:length(evs)
-        evs[i].currentPower = U[i]
-    end
-
-    return sum(U);
-
-end
-
-@addpolicy("peak")
-
-
-#### WEIRD POLICIES: This are only for trial purposes. Will be depurated.
-
-#max weight policy where weight is minimum between rem. work and rem. deadline
-function mw_policy(evs::Array{EVinstance},C::Number)
-
-    remaining_w = [ev.currentWorkload for ev in evs];
-    remaining_d = [ev.currentReportedDeadline for ev in evs];
-
-    weights = min.(remaining_w,remaining_d)
-    perm = sortperm(weights,rev=true);
+    deadlines = [ev.currentReportedDeadline for ev in evs];
+    perm = sortperm(deadlines);
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+
 end
 
-@addpolicy("mw")
+@addpolicy("edfu")
 
-#this policy comes from maximizing myopically the potential amount of work one can perform, ignoring future arrivals
-#it underload it behaves exactly as exact scheduling!
-function weird_policy(evs::Array{EVinstance},C::Number)
-
-    perm = sortperm([ev.currentReportedDeadline for ev in evs], rev=true)
-
-    remaining_w = [ev.currentWorkload for ev in evs];
-    remaining_d = [ev.currentReportedDeadline for ev in evs];
-
-    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
-end
-
-@addpolicy("weird")
-
-
-### Curtailed policies (for reported deadlines)
+### EDF policy based on reported deadlines with curtailing after deadline expiration (Narbondo et al 2021)
 function edfc_policy(evs::Array{EVinstance},C::Number)
-
 
     deadlines = [ev.currentReportedDeadline for ev in evs];
 
-    positivas = findall(deadlines.>0)
-    negativas = findall(deadlines.<=0)
+    pending = findall(deadlines.>0)
+    expired = findall(deadlines.<=0)
 
-    perm1 = sortperm(deadlines[positivas]);
-    perm2 = sortperm(deadlines[negativas], rev=true);
+    perm1 = sortperm(deadlines[pending]);
+    perm2 = sortperm(deadlines[expired], rev=true);
 
-    perm = [positivas[perm1];negativas[perm2]]
+    perm = [pending[perm1];expired[perm2]]
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 
@@ -299,22 +252,81 @@ end
 
 @addpolicy("edfc")
 
-function llfc_policy(evs::Array{EVinstance},C::Number)
+### LDF policy based on reported deadlines
+function llfu_policy(evs::Array{EVinstance},C::Number)
 
+    laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
+    perm = sortperm(laxities);
+
+    return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
+
+end
+
+@addpolicy("llfu")
+
+### LLF policy based on reported deadlines with curtailing after deadline expiration (Narbondo et al 2021)
+function llfc_policy(evs::Array{EVinstance},C::Number)
 
     deadlines = [ev.currentReportedDeadline for ev in evs];
     laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
 
-    positivas = findall(deadlines.>0)
-    negativas = findall(deadlines.<=0)
+    pending = findall(deadlines.>0)
+    expired = findall(deadlines.<=0)
 
-    perm1 = sortperm(laxities[positivas]);
-    perm2 = sortperm(laxities[negativas], rev=true);
+    perm1 = sortperm(laxities[pending]);
+    perm2 = sortperm(laxities[expired], rev=true);
 
-    perm = [positivas[perm1];negativas[perm2]]
+    perm = [pending[perm1];expired[perm2]]
 
     return general_priority_policy(evs::Array{EVinstance},C::Number,perm::Array{<:Integer})
 
 end
 
 @addpolicy("llfc")
+
+
+#######################################################################
+###
+### Routing policies. For use with a Router object
+###
+#######################################################################
+
+### Routing policy where the less occupied station is chosen
+function least_loaded_routing(stations::Vector{ChargingStation})
+
+    x = [length(sta.charging) for sta in stations]
+
+    _,idx = findmin(x)
+    return idx
+
+end
+
+export least_loaded_routing
+
+### Random routing policy
+function random_routing(stations::Vector{ChargingStation})
+
+    return rand(DiscreteUniform(1,length(stations)))
+    
+end
+
+export random_routing
+
+### Random routing policy based on the number of free spaces in each sink
+function free_spaces_routing(stations::Vector{ChargingStation})
+
+    @assert sum([sta.chargingSpots for sta in stations])<Inf "Free spaces routing requiere finite-capacity stations, found $([sta.chargingSpots for sta in stations])"
+
+    free = [sta.chargingSpots - sta.occupation for sta in stations]
+
+    if sum(free)>0
+        p = free/sum(free)
+        d = Categorical(p)
+        return rand(d)
+    else
+        return rand(DiscreteUniform(1,length(stations)))
+    end
+    
+end
+
+export free_spaces_routing

@@ -1,7 +1,44 @@
+abstract type Agent  end
+
+#Internal function that returns the time of next event of an agent and its type.
+function get_next_event(agent::Agent)::Tuple{Float64,Symbol}
+    return agent.timeToNextEvent, agent.nextEventType
+end
+
+#update state after dt time units (redefine if necessary for more complex Agents)
+function update_state!(agent::Agent, dt::Float64)
+    agent.timeToNextEvent = agent.timeToNextEvent-dt
+end
+
+function take_snapshot!(agent::Agent,t::Float64)
+    #do nothing unless redefined
+end
+
+"""
+EVinstance object.
+
+An EV with a given arrival time, departure time, optionally reported departure time, requested energy and charging power.
+Upon simulation, more internal parameters are filled. These are:
+
+* currentWorkload::Float64 - remaining energy to fulfill the vehicle.
+* currentDeadline::Float64 - remaining time until deadline expiration.
+* currentReportedDeadline::Float64 - remaining time until reported deadline expiration.
+* currentPower::Float64 - current charging power.
+* departureWorkload::Float64 - remaining energy to fulfill at the moment of departure.
+* completionTime::Float64 - when fully serviced, completion time of service.
+
+Constructor:
+
+- EVinstance(   arrivalTime::Float64,
+                departureTime::Float64,
+                requestedEnergy::Float64,
+                chargingPower::Float64;
+                reportedDepartureTime=reportedDeparture::Float64=NaN) 
+"""
 mutable struct EVinstance
     arrivalTime::Float64
     departureTime::Float64
-    reportedDepartureTime::Float64   ##para el caso en que hay incertidumbre
+    reportedDepartureTime::Float64
     requestedEnergy::Float64
     chargingPower::Float64
     currentWorkload::Float64
@@ -11,68 +48,56 @@ mutable struct EVinstance
     departureWorkload::Float64
     completionTime::Float64
 
-    #inicializo la instancia solo con los 4 importantes y completo los otros al comienzo.
-    #En particular reportedDepartureTime lo pongo igual a Departure time por defecto.
-    #Departure workload y CompletionTime queda en NaN hasta que se calculen mas adelante.
     EVinstance( arrivalTime::Float64,
                 departureTime::Float64,
                 requestedEnergy::Float64,
-                chargingPower::Float64) = new(  arrivalTime,
-                                                departureTime,
-                                                departureTime,
-                                                requestedEnergy,
-                                                chargingPower,
-                                                requestedEnergy,
-                                                departureTime-arrivalTime,
-                                                departureTime-arrivalTime,
-                                                0.0,NaN,NaN)
-
-    #este segundo constructor me deja llenar el reportedDepartureTime
-    #en particular el valor de currentReportedDeadline se calcula con lo el reportado
-    EVinstance( arrivalTime::Float64,
-                departureTime::Float64,
-                reportedDepartureTime::Float64,
-                requestedEnergy::Float64,
-                chargingPower::Float64) = new(  arrivalTime,
-                                                departureTime,
-                                                reportedDepartureTime,
-                                                requestedEnergy,
-                                                chargingPower,
-                                                requestedEnergy,
-                                                departureTime-arrivalTime,
-                                                reportedDepartureTime-arrivalTime,
-                                                0.0,NaN,NaN)
+                chargingPower::Float64;
+                reportedDepartureTime=reportedDeparture::Float64=NaN) = new(arrivalTime,
+                                                                            departureTime,
+                                                                            reportedDepartureTime,
+                                                                            requestedEnergy,
+                                                                            chargingPower,
+                                                                            requestedEnergy,
+                                                                            departureTime-arrivalTime,
+                                                                            reportedDepartureTime-arrivalTime,
+                                                                            0.0,NaN,NaN)
 end
 
+"""
+Snapshot object
+
+Stores the time and the currently charging vehicles and currently already charged vehicles present in a ChargingStation
+"""
 mutable struct Snapshot
     t::Float64                          #snapshot time
     charging::Array{EVinstance}         #vehicles in the system in charge
     alreadyCharged::Array{EVinstance}   #already charged vehicles still present
 end
 
-mutable struct TimeTrace
-    T::Vector{Float64}          #event times
-    X::Vector{UInt16}           #charging vehicles
-    Y::Vector{UInt16}           #already charged
-    P::Vector{Float64}          #used power
-end
+"""
+ChargingStationStatistics object
 
-mutable struct SimStatistics
-    rangeX::Vector{Integer}
-    pX::Vector{Float64} #steady state X
-    rangeY::Vector{Integer}
-    pY::Vector{Float64} #steady state Y
-    avgX::Float64       #average X
-    avgY::Float64       #average Y
-    pD::Float64         #probability of expired deadline
-    avgW::Float64       #average unfinished workload (taking finished into account)
-end
+Stores occupation statistics of a ChargingStation. See compute_statistics on how to get them.
 
-#defino la estructura resultados de simulacion
-mutable struct EVSim
-    parameters::Dict
-    timetrace::TimeTrace
-    EVs::Vector{EVinstance}
-    snapshots::Vector{Snapshot}
-    stats::SimStatistics
+Fields stored:
+
+* rangeCharging,pCharging: distribution of the number of actively charging vehicles.
+* rangeAlreadyCharged,pAlreadyCharged: distribution of the number of already charged vehicles.
+* avgCharging: mean value of actively charging vehicles
+* avgAlreadyCharged: mean value of already charged vehicles
+* pD: empirical probability of deadline expiration before full charge.
+* avgW: average unfulfilled energy upon vehicle departure.
+* pB: blocking probability (for finite space charging stations).
+
+"""
+mutable struct ChargingStationStatistics
+    rangeCharging::Vector{Int64}
+    pCharging::Vector{Float64}
+    rangeAlreadyCharged::Vector{Int64}
+    pAlreadyCharged::Vector{Float64}
+    avgCharging::Float64
+    avgAlreadyCharged::Float64
+    pD::Float64
+    avgW::Float64
+    pB::Float64
 end

@@ -1,14 +1,12 @@
 name = "EVQueues"
 uuid = "0ba0fc34-c32a-4e87-897a-dc4e812d5ecc"
 authors = ["Andres Ferragut <andres.ferragut@gmail.com> and contributors"]
-version = "0.2.1"
+version = "1.0.0"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-GLPK = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
-JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
