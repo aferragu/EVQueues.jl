@@ -26,7 +26,7 @@ params = Dict(
         "Policy" => "EDF",
     )
 
-sim = Simulation([arr,sta], params)
+sim = Simulation([arr,sta], params=params)
 
 #Simulate
 simulate(sim, Tfinal)

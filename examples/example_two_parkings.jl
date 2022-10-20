@@ -52,7 +52,7 @@ sta2 = ChargingStation(Inf,Pmax[2],policy)
 
 connect!(rtr,sta1,sta2)
 
-sim = Simulation([arr,rtr,sta1,sta2], params)
+sim = Simulation([arr,rtr,sta1,sta2], params=params)
 
 simulate(sim, Tfinal)
 

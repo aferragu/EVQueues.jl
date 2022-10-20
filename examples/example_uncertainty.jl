@@ -27,7 +27,7 @@ params = Dict(
     "uncertainiy_parameter" => sigma,
 )
 
-sim = Simulation([arr,sta], params)
+sim = Simulation([arr,sta], params=params)
 
 simulate(sim, Tfinal)
 

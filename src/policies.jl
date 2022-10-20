@@ -52,6 +52,7 @@ end
 
 @addpolicy("llf")
 
+### Least laxity ratio (Zeballos et al 2019)
 function llr_policy(evs::Array{EVinstance},C::Number)
 
     relative_laxities = [ev.currentDeadline*ev.chargingPower/ev.currentWorkload for ev in evs];
@@ -61,7 +62,6 @@ function llr_policy(evs::Array{EVinstance},C::Number)
 end
 
 @addpolicy("llr")
-
 
 ### FIFO. It's a priority policy with arrival time as priority vector.
 function fifo_policy(evs::Array{EVinstance},C::Number)
@@ -73,7 +73,7 @@ end
 
 @addpolicy("fifo")
 
-### FIFO. It's a priority policy with reversed arrival time as priority vector.
+### LIFO. It's a priority policy with reversed arrival time as priority vector.
 function lifo_policy(evs::Array{EVinstance},C::Number)
 
     perm = collect(length(evs):-1:1)
@@ -116,7 +116,6 @@ end
 
 @addpolicy("ratio")
 
-
 ### LRPT: Largest remaining processing tiem
 function lrpt_policy(evs::Array{EVinstance},C::Number)
 
@@ -157,7 +156,6 @@ end
 
 @addpolicy("parallel")
 
-
 ### Proportional fairness policy
 function pf_policy(evs::Array{EVinstance},C::Number)
 
@@ -173,6 +171,7 @@ function pf_policy(evs::Array{EVinstance},C::Number)
     return sum(U);
 end
 
+## helper function to compute the proportional fair allocation
 function compute_pf(workloads,deadlines,C)
 
     w=workloads./deadlines;
@@ -199,7 +198,7 @@ end
 
 @addpolicy("pf")
 
-### Exact scheduling.
+### Exact scheduling (Nakahira et al 2018)
 function exact_policy(evs::Array{EVinstance},C::Number)
 
     #exact scheduling o potencia maxima
@@ -222,6 +221,7 @@ end
 
 ### Policies that use reported deadlines instead of deadline
 
+### EDF policy based on reported deadlines
 function edfu_policy(evs::Array{EVinstance},C::Number)
 
     deadlines = [ev.currentReportedDeadline for ev in evs];
@@ -233,6 +233,7 @@ end
 
 @addpolicy("edfu")
 
+### EDF policy based on reported deadlines with curtailing after deadline expiration (Narbondo et al 2021)
 function edfc_policy(evs::Array{EVinstance},C::Number)
 
     deadlines = [ev.currentReportedDeadline for ev in evs];
@@ -251,6 +252,7 @@ end
 
 @addpolicy("edfc")
 
+### LDF policy based on reported deadlines
 function llfu_policy(evs::Array{EVinstance},C::Number)
 
     laxities = [ev.currentReportedDeadline-ev.currentWorkload/ev.chargingPower for ev in evs];
@@ -262,6 +264,7 @@ end
 
 @addpolicy("llfu")
 
+### LLF policy based on reported deadlines with curtailing after deadline expiration (Narbondo et al 2021)
 function llfc_policy(evs::Array{EVinstance},C::Number)
 
     deadlines = [ev.currentReportedDeadline for ev in evs];
@@ -288,7 +291,8 @@ end
 ###
 #######################################################################
 
-function least_loaded_phase_routing(stations::Vector{ChargingStation})
+### Routing policy where the less occupied station is chosen
+function least_loaded_routing(stations::Vector{ChargingStation})
 
     x = [length(sta.charging) for sta in stations]
 
@@ -297,8 +301,9 @@ function least_loaded_phase_routing(stations::Vector{ChargingStation})
 
 end
 
-export least_loaded_phase_routing
+export least_loaded_routing
 
+### Random routing policy
 function random_routing(stations::Vector{ChargingStation})
 
     return rand(DiscreteUniform(1,length(stations)))
@@ -307,6 +312,7 @@ end
 
 export random_routing
 
+### Random routing policy based on the number of free spaces in each sink
 function free_spaces_routing(stations::Vector{ChargingStation})
 
     @assert sum([sta.chargingSpots for sta in stations])<Inf "Free spaces routing requiere finite-capacity stations, found $([sta.chargingSpots for sta in stations])"

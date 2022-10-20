@@ -1,16 +1,34 @@
+#Abstract Arrival Process type
 abstract type ArrivalProcess <: Agent end
 
-#Connects an Arrival Process with its next step
+#Generic function to connect an ArrivalProcess to its next stage (router, charger, etc.)
 function connect!(arr::ArrivalProcess, a::Agent)
     arr.sink = a
 end
 
+#Internal function to record the state in the trace DataFrame
 function trace_state!(arr::ArrivalProcess, t::Float64)
     push!(arr.trace, [t,arr.totalArrivals, arr.totalEnergy])
 end
 
-### Poisson Arrival Process
-#   Random arrivals as a Poisson process with general deadline and work distributions.
+"""
+PoissonArrivalProcess Agent
+
+Generates a Poisson Arrival process of EVinstances with given intensity, requested energy (a Distribution) and charging power (either a Float64 for uniform charging powers or a Distribution)
+
+Additional parameters are the initial laxity (Distribution), the total sojourn time (Distribution) and deadline uncertainty (Distribution). Sojourn time takes precedence over laxity if both are defined.
+
+Constructor:
+
+PoissonArrivalProcess(  intensity::Float64, 
+                        requestedEnergy::Distribution, 
+                        chargingPower::Union{Distribution,Float64};
+                        initialLaxity::Union{Distribution,Nothing} = nothing,
+                        sojournTime::Union{Distribution,Nothing} = nothing, 
+                        uncertainty::Union{Distribution,Nothing} = nothing)
+
+
+"""
 mutable struct PoissonArrivalProcess <: ArrivalProcess
 
     #attributes
@@ -49,10 +67,10 @@ mutable struct PoissonArrivalProcess <: ArrivalProcess
 
 end
 
-#handles the event at time t with type "event"
+#handles the event at time t
 function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
 
-    @assert isapprox(arr.timeToNextEvent,0.0,atol=eps()) "Called handle_event in ArrivalProcess but timeToNextEvent>0"
+    @assert isapprox(arr.timeToNextEvent,0.0,atol=tol) "Called handle_event in ArrivalProcess but timeToNextEvent>0"
     arr.totalArrivals = arr.totalArrivals + 1
 
     energy = rand(arr.requestedEnergy)
@@ -87,9 +105,23 @@ function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
 end
 
 
-### Trace Arrival process
-#   Given a trace (vectors or DataFrame) of arrival times, energies, deadlines and charging powers,
-#   constructs the corresponding arrival process.
+"""
+TraceArrivalProcess Agent
+
+Generates an Arrival process of EVinstances with the given arrival times, requested energies, departure times, charging powers and, optionally, reported departure times.
+
+Constructors:
+
+- TraceArrivalProcess(  arrivalTimes::Vector{Float64}, 
+                        requestedEnergies::Vector{Float64},
+                        departureTimes::Vector{Float64}, 
+                        chargingPowers::Vector{Float64};
+                        reportedDepartureTimes::Vector{Float64} = Float64[])
+
+- TraceArrivalProcess(data::DataFrame) where the DataFrame data must have the same column names than the previous constructor.
+
+
+"""
 mutable struct TraceArrivalProcess <: ArrivalProcess
 
     #attributes
@@ -142,7 +174,7 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
 
 end
 
-#handles the event at time t with type "event"
+#handles the event at time t
 function handle_event(arr::TraceArrivalProcess, t::Float64, params...)
     
     @assert isapprox(arr.timeToNextEvent,0.0,atol=eps()) "At time $t Called handle_event in TraceArrivalProcess but nextArrival=$(arr.timeToNextEvent)>0"

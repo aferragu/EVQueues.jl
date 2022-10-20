@@ -21,8 +21,7 @@ laxity_rng=Dirac(0.0);
 
 arr = PoissonArrivalProcess(lambda,work_rng,1.0; initialLaxity = laxity_rng)
 
-#rtr = Router(least_loaded_phase_routing)
-rtr = Router(random_routing)
+rtr = Router(free_spaces_routing)
 
 connect!(arr,rtr)
 
@@ -33,7 +32,7 @@ phases = [phase1,phase2,phase3]
 
 connect!(rtr,phases...)
 
-sim = Simulation([arr,rtr,phase1,phase2,phase3], params)
+sim = Simulation([arr,rtr,phase1,phase2,phase3], params=params)
 
 simulate(sim, Tfinal)
 

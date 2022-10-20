@@ -1,3 +1,15 @@
+"""
+Router Agent
+
+When connected to an Arrival Process as its sink, receives the flow of EVinstances and routes them according to the routing policy defined in its constructor. Must be connected to one or several ChargingStations before use.
+
+Constructors:
+
+- Router(routingPolicy::Function)
+
+See examples/example_two_parkings.jl for a complete use case.
+
+"""
 mutable struct Router <: Agent
 
     #attributes
@@ -24,17 +36,19 @@ mutable struct Router <: Agent
 
 end
 
+#Generic function to connect an ArrivalProcess to its next stage (router, charger, etc.)
 function connect!(rtr::Router,agents...)
     push!(rtr.sinks,agents...)
     push!(rtr.routedArrivals, zeros(Int64, length(agents))...)
     push!(rtr.routedEnergy, zeros(length(agents))...)
 end
 
+#Internal function to record the state in the trace DataFrame
 function trace_state!(rtr::Router,t::Float64)
     push!(rtr.trace, [t,rtr.totalArrivals, rtr.totalEnergy, rtr.routedArrivals, rtr.routedEnergy])
 end
 
-#handles the event at time t with type "event"
+#handles the event at time t
 function handle_event(rtr::Router, t::Float64, params...)
 
     eventType = params[1]

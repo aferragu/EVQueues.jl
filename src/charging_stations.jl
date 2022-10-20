@@ -1,3 +1,12 @@
+"""
+Charging Station Agent
+
+Defines a general EV Charging Station with a given number of charging spots (i.e. parking spaces), maximum power that can be delivered by the installation and a scheduling policy (e.g. edf_policy). It can be used directly connected to an Arrival Process or to a Router.
+
+Constructor:
+
+ChargingStation(chargingSpots=Inf, maximumPower=Inf, schedulingPolicy = parallel_policy; snapshots = Float64[])
+"""
 mutable struct ChargingStation <: Agent
 
     #attributes
@@ -55,18 +64,19 @@ mutable struct ChargingStation <: Agent
 
 end
 
-#update state after dt time units
+#Internal function to update state after dt time units
 function update_state!(sta::ChargingStation, dt::Float64)
     map(v->update_vehicle(v,dt),sta.charging);
     map(v->update_vehicle(v,dt),sta.alreadyCharged);
     sta.timeToNextEvent = sta.timeToNextEvent-dt
 end
 
+#Internal function to save the state to the trace DataFrame
 function trace_state!(sta::ChargingStation, t::Float64)
     push!(sta.trace, [t,sta.arrivals,sta.occupation, sta.currentPower, length(sta.charging), length(sta.alreadyCharged),sta.totalCompletedCharges,sta.incompleteDepartures,sta.totalDepartures, sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
 end
 
-#handles the event at time t with type "event"
+#Handles the event at time t
 function handle_event(sta::ChargingStation, t::Float64, params...)
 
     #Defined events:
@@ -201,6 +211,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
 
 end
 
+#Internal function to take a snapshot of the state at time t
 function take_snapshot!(sta::ChargingStation,t::Float64)
 
     charging = deepcopy(sta.charging)
