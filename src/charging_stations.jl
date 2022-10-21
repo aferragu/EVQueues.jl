@@ -23,6 +23,7 @@ mutable struct ChargingStation <: Agent
     charging::Array{EVinstance}
     alreadyCharged::Array{EVinstance}
     incoming::Array{EVinstance}
+    congestionPrice::Float64
 
     #tracing
     trace::DataFrame
@@ -50,6 +51,7 @@ mutable struct ChargingStation <: Agent
                             currentPower = 0.0, 
                             currentCharging=0,
                             currentAlreadyCharged=0,
+                            currentCongestionPrice=0.0,
                             totalCompletedCharges=0,
                             incompleteDepartures=0,
                             totalDepartures=0,
@@ -58,9 +60,9 @@ mutable struct ChargingStation <: Agent
                             totalEnergyDelivered=0.0
                         )
         if isempty(snapshots)
-            new(chargingSpots,maximumPower,schedulingPolicy,position,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],EVinstance[],trace,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[], Inf)
+            new(chargingSpots,maximumPower,schedulingPolicy,position,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],EVinstance[],0.0,trace,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[], Inf)
         else
-            new(chargingSpots,maximumPower,schedulingPolicy,position, snapshots[1],:Snapshot,0,0.0,EVinstance[],EVinstance[],EVinstance[],trace,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[],snapshots[1])
+            new(chargingSpots,maximumPower,schedulingPolicy,position, snapshots[1],:Snapshot,0,0.0,EVinstance[],EVinstance[],EVinstance[],0.0,trace,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[],snapshots[1])
         end
     end
 
@@ -76,7 +78,7 @@ end
 
 #Internal function to save the state to the trace DataFrame
 function trace_state!(sta::ChargingStation, t::Float64)
-    push!(sta.trace, [t,sta.arrivals,sta.occupation, sta.currentPower, length(sta.charging), length(sta.alreadyCharged),sta.totalCompletedCharges,sta.incompleteDepartures,sta.totalDepartures, sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
+    push!(sta.trace, [t,sta.arrivals,sta.occupation, sta.currentPower, length(sta.charging), length(sta.alreadyCharged), sta.congestionPrice, sta.totalCompletedCharges,sta.incompleteDepartures,sta.totalDepartures, sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
 end
 
 #Handles the event at time t
@@ -230,6 +232,9 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         nextSnapshot = sta.snapshotTimes[1]-t
     end
 
+    #update congestionPrice
+    sta.congestionPrice = compute_congestion_price(sta)
+
     ##Define next event
     aux,case = findmin([nextCharge,nextDepON,nextDepOFF,nextIncoming,nextSnapshot])
 
@@ -257,8 +262,9 @@ function take_snapshot!(sta::ChargingStation,t::Float64)
     charging = deepcopy(sta.charging)
     alreadyCharged = deepcopy(sta.alreadyCharged)
     incoming = deepcopy(sta.incoming)
+    congestionPrice = sta.congestionPrice
 
-    snapshot = Snapshot(t,charging,alreadyCharged,incoming)
+    snapshot = Snapshot(t,charging,alreadyCharged,incoming,congestionPrice)
     push!(sta.snapshots,snapshot)
     
 end

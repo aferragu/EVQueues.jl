@@ -88,6 +88,7 @@ mutable struct Snapshot
     charging::Array{EVinstance}         #vehicles in the system in charge
     alreadyCharged::Array{EVinstance}   #already charged vehicles still present
     incoming::Array{EVinstance}         #incoming vehicles: assigned but not yet arrived
+    congestionPrice::Float64            #congestion price of the station at the time of the snapshot
 end
 
 """

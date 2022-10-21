@@ -14,6 +14,19 @@ function compute_arrival_time(ev::EVinstance, position::Vector{Float64})
     return distance/ev.velocity
 end
 
+function compute_congestion_price(sta::ChargingStation)
+    
+    if length(sta.incoming) + length(sta.charging) > 0
+        reqPower = sum([ev.chargingPower for ev in sta.charging]) + sum([ev.chargingPower for ev in sta.incoming])
+        price = max( (reqPower-sta.maximumPower)/reqPower , 0.0)
+    else
+        price = 0.0
+    end
+    
+    return price
+end
+
+
 ### Internal function to compute the mean value of a function f(X) over a trajectory of time T.
 function compute_average(f,T::Vector{Float64},X::Vector{Int64})
     return sum(f(X[1:end-1]).*diff(T))/T[end]

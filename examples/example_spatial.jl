@@ -11,14 +11,13 @@ function plot_positions(stations,i,xlims=(-1,1),ylims=(-1,1))
         pos = sta.position
         incoming = sta.snapshots[i].incoming
         charging = sta.snapshots[i].charging
-        
-        s = length(findall([ev.currentPower>0 for ev in charging]))
-        q = length(findall([ev.currentPower==0 for ev in charging]))
+        currentPower = sum([ev.currentPower for ev in charging])
+        reqPower = sum([ev.chargingPower for ev in charging]) + sum([ev.chargingPower for ev in incoming])
 
-        scatter!(p,[pos[1]], [pos[2]], marker=:circle, markeralpha = 0.2, markersize=s, xlims=(-1,1), ylims=(-1,1), legend=:none, color=:blue)
-        if q>0
-            scatter!(p,[pos[1]], [pos[2]], marker=:circle, markeralpha = 0.2, markersize=(s+q), color=:red, xlims=(-1,1), ylims=(-1,1))
+        if reqPower>currentPower
+            scatter!(p,[pos[1]], [pos[2]], marker=:circle, markeralpha = 0.2, markersize=reqPower, color=:red, xlims=(-1,1), ylims=(-1,1))
         end
+        scatter!(p,[pos[1]], [pos[2]], marker=:circle, markeralpha = 0.4, markersize=currentPower, xlims=(-1,1), ylims=(-1,1), legend=:none, color=:blue)
 
         scatter!(p,[ev.currentPosition[1] for ev in incoming], [ev.currentPosition[2] for ev in incoming], marker=:square, markersize=2, color=:green)
         
