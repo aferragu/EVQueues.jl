@@ -292,7 +292,7 @@ end
 #######################################################################
 
 ### Routing policy where the less occupied station is chosen
-function least_loaded_routing(stations::Vector{ChargingStation})
+function least_loaded_routing(stations::Vector{ChargingStation}, ev::EVinstance)
 
     x = [length(sta.charging) for sta in stations]
 
