@@ -17,7 +17,9 @@ end
 """
 EVinstance object.
 
-An EV with a given arrival time, departure time, optionally reported departure time, requested energy and charging power.
+An EV with a given arrival time, departure time, requested energy and charging power.
+Optionally a reported departure time, initial position and velocity can be specified.
+
 Upon simulation, more internal parameters are filled. These are:
 
 * currentWorkload::Float64 - remaining energy to fulfill the vehicle.
@@ -26,6 +28,7 @@ Upon simulation, more internal parameters are filled. These are:
 * currentPower::Float64 - current charging power.
 * departureWorkload::Float64 - remaining energy to fulfill at the moment of departure.
 * completionTime::Float64 - when fully serviced, completion time of service.
+* currentPosition::Vector{Float64} - current position.
 
 Constructor:
 
@@ -33,7 +36,9 @@ Constructor:
                 departureTime::Float64,
                 requestedEnergy::Float64,
                 chargingPower::Float64;
-                reportedDepartureTime=reportedDeparture::Float64=NaN) 
+                reportedDepartureTime=reportedDeparture::Float64 = NaN,
+                initialPosition::Vector{Float64} = [NaN,NaN],
+                velocity::Float64 = NaN)
 """
 mutable struct EVinstance
     arrivalTime::Float64
@@ -41,26 +46,36 @@ mutable struct EVinstance
     reportedDepartureTime::Float64
     requestedEnergy::Float64
     chargingPower::Float64
+    initialPosition::Vector{Float64}
+    velocity::Float64
     currentWorkload::Float64
     currentDeadline::Float64
     currentReportedDeadline::Float64
     currentPower::Float64
     departureWorkload::Float64
     completionTime::Float64
+    currentPosition::Vector{Float64}
 
     EVinstance( arrivalTime::Float64,
                 departureTime::Float64,
                 requestedEnergy::Float64,
                 chargingPower::Float64;
-                reportedDepartureTime=reportedDeparture::Float64=NaN) = new(arrivalTime,
-                                                                            departureTime,
-                                                                            reportedDepartureTime,
-                                                                            requestedEnergy,
-                                                                            chargingPower,
-                                                                            requestedEnergy,
-                                                                            departureTime-arrivalTime,
-                                                                            reportedDepartureTime-arrivalTime,
-                                                                            0.0,NaN,NaN)
+                reportedDepartureTime=reportedDeparture::Float64 = NaN,
+                initialPosition::Vector{Float64} = [NaN,NaN],
+                velocity::Float64 = NaN) = new( arrivalTime,
+                                                departureTime,
+                                                reportedDepartureTime,
+                                                requestedEnergy,
+                                                chargingPower,
+                                                initialPosition,
+                                                velocity,
+                                                requestedEnergy,
+                                                departureTime-arrivalTime,
+                                                reportedDepartureTime-arrivalTime,
+                                                0.0,
+                                                NaN,
+                                                NaN,
+                                                initialPosition)
 end
 
 """

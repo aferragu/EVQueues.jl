@@ -18,6 +18,8 @@ Generates a Poisson Arrival process of EVinstances with given intensity, request
 
 Additional parameters are the initial laxity (Distribution), the total sojourn time (Distribution) and deadline uncertainty (Distribution). Sojourn time takes precedence over laxity if both are defined.
 
+If arrivals are spatial, a position distribution to sample initial positions of vehicles and their velocities can be specified.
+
 Constructor:
 
 PoissonArrivalProcess(  intensity::Float64, 
@@ -25,9 +27,9 @@ PoissonArrivalProcess(  intensity::Float64,
                         chargingPower::Union{Distribution,Float64};
                         initialLaxity::Union{Distribution,Nothing} = nothing,
                         sojournTime::Union{Distribution,Nothing} = nothing, 
-                        uncertainty::Union{Distribution,Nothing} = nothing)
-
-
+                        uncertainty::Union{Distribution,Nothing} = nothing
+                        positionDistribution::Union{Distribution,Nothing} = nothing,
+                        velocity::Float64 = NaN)
 """
 mutable struct PoissonArrivalProcess <: ArrivalProcess
 
@@ -39,6 +41,8 @@ mutable struct PoissonArrivalProcess <: ArrivalProcess
     initialLaxity::Union{Distribution,Nothing}
     sojournTime::Union{Distribution,Nothing}
     uncertainty::Union{Distribution,Nothing}
+    positionDistribution::Union{Distribution,Nothing}
+    velocity::Float64
 
     #sink
     sink::Union{Agent, Nothing}
@@ -57,11 +61,13 @@ mutable struct PoissonArrivalProcess <: ArrivalProcess
                                     chargingPower::Union{Distribution,Float64};
                                     initialLaxity::Union{Distribution,Nothing} = nothing, 
                                     sojournTime::Union{Distribution,Nothing} = nothing, 
-                                    uncertainty::Union{Distribution,Nothing} = nothing)
+                                    uncertainty::Union{Distribution,Nothing} = nothing,
+                                    positionDistribution::Union{Distribution,Nothing} = nothing,
+                                    velocity::Float64 = NaN)
 
         firstArrival = rand(Exponential(1/intensity))
         trace = DataFrame(time=[0.0], totalArrivals=[0.0], totalEnergy=[0.0])
-        new(intensity, requestedEnergy, chargingPower, initialLaxity, sojournTime, uncertainty, nothing, firstArrival,:Arrival, trace, 0.0,0.0);
+        new(intensity, requestedEnergy, chargingPower, initialLaxity, sojournTime, uncertainty, positionDistribution, velocity, nothing, firstArrival,:Arrival, trace, 0.0,0.0);
 
     end
 
@@ -94,10 +100,17 @@ function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
     
     if  arr.uncertainty !== nothing
         uncertainty_value = rand(arr.uncertainty)
-        newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = departure+uncertainty_value)
+        reportedDepartureTime = departure + uncertainty_value
     else
-        newEV = EVinstance(t,departure,energy,power)
+        reportedDepartureTime = departure
     end
+
+    if arr.positionDistribution !== nothing
+        initialPosition = rand(arr.positionDistribution)
+    else
+        initialPosition = [NaN,NaN]
+    end
+    newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = reportedDepartureTime, initialPosition = initialPosition, velocity = arr.velocity)
 
     handle_event(arr.sink, t, :Arrival, newEV)
     arr.timeToNextEvent = rand(Exponential(1/arr.intensity))
