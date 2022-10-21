@@ -7,6 +7,17 @@ function update_vehicle(ev::EVinstance,dt::Float64)
 
 end
 
+function update_position(ev::EVinstance, position::Vector{Float64}, dt::Float64)
+
+    ev.currentPosition = ev.currentPosition + ev.velocity * dt * (position - ev.currentPosition)
+
+end
+
+function compute_arrival_time(ev::EVinstance, position::Vector{Float64})
+    distance = sqrt(sum(ev.currentPosition - position))
+    return distance/ev.velocity
+end
+
 ### Internal function to compute the mean value of a function f(X) over a trajectory of time T.
 function compute_average(f,T::Vector{Float64},X::Vector{Int64})
     return sum(f(X[1:end-1]).*diff(T))/T[end]

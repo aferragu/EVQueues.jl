@@ -87,6 +87,7 @@ mutable struct Snapshot
     t::Float64                          #snapshot time
     charging::Array{EVinstance}         #vehicles in the system in charge
     alreadyCharged::Array{EVinstance}   #already charged vehicles still present
+    incoming::Array{EVinstance}         #incoming vehicles: assigned but not yet arrived
 end
 
 """
