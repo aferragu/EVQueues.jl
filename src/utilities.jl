@@ -1,20 +1,16 @@
 ### Internal function to update the state of a vehicle after time dt.
-function update_vehicle(ev::EVinstance,dt::Float64)
-
+function update_vehicle!(ev::EVinstance,dt::Float64)
     ev.currentWorkload-=ev.currentPower*dt;
     ev.currentDeadline-=dt;
     ev.currentReportedDeadline-=dt;
-
 end
 
-function update_position(ev::EVinstance, position::Vector{Float64}, dt::Float64)
-
-    ev.currentPosition = ev.currentPosition + ev.velocity * dt * (position - ev.currentPosition)
-
+function update_position!(ev::EVinstance, position::Vector{Float64}, dt::Float64)
+    ev.currentPosition = ev.currentPosition + ev.velocity * dt * (position - ev.currentPosition)/sqrt(sum((ev.currentPosition - position).^2))
 end
 
 function compute_arrival_time(ev::EVinstance, position::Vector{Float64})
-    distance = sqrt(sum(ev.currentPosition - position))
+    distance = sqrt(sum((ev.currentPosition - position).^2))
     return distance/ev.velocity
 end
 

@@ -68,9 +68,9 @@ end
 
 #Internal function to update state after dt time units
 function update_state!(sta::ChargingStation, dt::Float64)
-    map(v->update_vehicle(v,dt),sta.charging);
-    map(v->update_vehicle(v,dt),sta.alreadyCharged);
-    map(v->update_position(v,sta.position,dt),sta.incoming);
+    map(v->update_vehicle!(v,dt),sta.charging);
+    map(v->update_vehicle!(v,dt),sta.alreadyCharged);
+    map(v->update_position!(v,sta.position,dt),sta.incoming);
     sta.timeToNextEvent = sta.timeToNextEvent-dt
 end
 
@@ -115,13 +115,13 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
 
             #find out which
             aux,k = findmin(compute_arrival_time.(sta.incoming,Ref(sta.position)))
-            @assert isapprox(aux,0,atol=tol) "At time $t incoming :Arrival event with positive computed arrival time aux"
+            @assert isapprox(aux,0,atol=tol) "At time $t incoming :Arrival event with positive computed arrival time $aux"
 
             #retrieve it and delete it from incoming
-            newEV = incoming[k]
+            newEV = sta.incoming[k]
             deleteat!(sta.incoming,k)
 
-            @assert isapprox(ev.currentPosition,sta.position,atol=tol) "At time $t incoming :Arrival but positions do not match"
+            @assert isapprox(newEV.currentPosition,sta.position,atol=tol) "At time $t incoming :Arrival but positions do not match"
 
             #proceed as usual
             sta.arrivals = sta.arrivals+1
