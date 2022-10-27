@@ -31,6 +31,7 @@ mutable struct ChargingStation <: Agent
     totalCompletedCharges::Int64
     incompleteDepartures::Int64
     totalDepartures::Int64
+    abandonments::Int64
     blocked::Int64
     totalEnergyRequested::Float64
     totalEnergyDelivered::Float64
@@ -51,18 +52,20 @@ mutable struct ChargingStation <: Agent
                             currentPower = 0.0, 
                             currentCharging=0,
                             currentAlreadyCharged=0,
+                            currentIncoming=0,
                             currentCongestionPrice=0.0,
                             totalCompletedCharges=0,
                             incompleteDepartures=0,
                             totalDepartures=0,
+                            abandonments=0,
                             blocked=0,
                             totalEnergyRequested=0.0,
                             totalEnergyDelivered=0.0
                         )
         if isempty(snapshots)
-            new(chargingSpots,maximumPower,schedulingPolicy,position,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],EVinstance[],0.0,trace,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[], Inf)
+            new(chargingSpots,maximumPower,schedulingPolicy,position,Inf,:Nothing,0,0.0,EVinstance[],EVinstance[],EVinstance[],0.0,trace,0,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[], Inf)
         else
-            new(chargingSpots,maximumPower,schedulingPolicy,position, snapshots[1],:Snapshot,0,0.0,EVinstance[],EVinstance[],EVinstance[],0.0,trace,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[],snapshots[1])
+            new(chargingSpots,maximumPower,schedulingPolicy,position, snapshots[1],:Snapshot,0,0.0,EVinstance[],EVinstance[],EVinstance[],0.0,trace,0,0,0,0,0,0,0.0,0.0,EVinstance[],snapshots,Snapshot[],snapshots[1])
         end
     end
 
@@ -72,13 +75,14 @@ end
 function update_state!(sta::ChargingStation, dt::Float64)
     map(v->update_vehicle!(v,dt),sta.charging);
     map(v->update_vehicle!(v,dt),sta.alreadyCharged);
+    map(v->update_vehicle!(v,dt),sta.incoming);
     map(v->update_position!(v,sta.position,dt),sta.incoming);
     sta.timeToNextEvent = sta.timeToNextEvent-dt
 end
 
 #Internal function to save the state to the trace DataFrame
 function trace_state!(sta::ChargingStation, t::Float64)
-    push!(sta.trace, [t,sta.arrivals,sta.occupation, sta.currentPower, length(sta.charging), length(sta.alreadyCharged), sta.congestionPrice, sta.totalCompletedCharges,sta.incompleteDepartures,sta.totalDepartures, sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
+    push!(sta.trace, [t,sta.arrivals,sta.occupation, sta.currentPower, length(sta.charging), length(sta.alreadyCharged), length(sta.incoming), sta.congestionPrice, sta.totalCompletedCharges,sta.incompleteDepartures,sta.totalDepartures, sta.abandonments, sta.blocked,sta.totalEnergyRequested,sta.totalEnergyDelivered])
 end
 
 #Handles the event at time t
@@ -187,6 +191,14 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
         sta.occupation = sta.occupation - 1
         sta.totalDepartures = sta.totalDepartures + 1
 
+    elseif eventType === :Abandonment
+
+        aux,k = findmin([ev.currentDeadline for ev in sta.incoming]);
+        @assert isapprox(aux,0.0,atol=tol) ":Abandonment event with positive deadline?"
+
+        deleteat!(sta.incoming,k);
+        sta.abandonments = sta.abandonments + 1
+
     elseif eventType === :Snapshot
 
         take_snapshot!(sta,t)
@@ -222,8 +234,10 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
 
     if length(sta.incoming)>0
         nextIncoming = minimum(compute_arrival_time.(sta.incoming,Ref(sta.position)))
+        nextAbandonment = minimum([ev.currentDeadline for ev in sta.incoming])
     else
         nextIncoming = Inf
+        nextAbandonment = Inf
     end
 
     if isempty(sta.snapshotTimes)
@@ -236,7 +250,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
     sta.congestionPrice = compute_congestion_price(sta)
 
     ##Define next event
-    aux,case = findmin([nextCharge,nextDepON,nextDepOFF,nextIncoming,nextSnapshot])
+    aux,case = findmin([nextCharge, nextDepON, nextDepOFF, nextIncoming, nextAbandonment, nextSnapshot])
 
     sta.timeToNextEvent = aux
     if aux==Inf
@@ -250,9 +264,10 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
     elseif case==4
         sta.nextEventType = :Arrival
     elseif case==5
+        sta.nextEventType = :Abandonment
+    elseif case==6
         sta.nextEventType = :Snapshot
     end
-
 
 end
 

@@ -236,7 +236,7 @@ function Base.show(ev::EVinstance)
     println("Current remaining work: $(ev.currentWorkload)")
     println("Current remaining deadline: $(ev.currentDeadline)")
     println("Current remaining deadline as reported: $(ev.currentReportedDeadline)")
-    println("Current charging rate: $(ev.chargingPower)")
+    println("Current charging rate: $(ev.currentPower)")
     println("Remaining energy on departure (if departed): $(ev.departureWorkload)")
     println("Comppletion time (if completed): $(ev.completionTime)")
 

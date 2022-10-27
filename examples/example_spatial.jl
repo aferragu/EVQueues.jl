@@ -48,24 +48,25 @@ end
 
 #Parameters
 area = 4.0
-lambda = 20.0;
-mu=1.0;
+lambda = 1.0;
+mu=1/60.0;
 
 C=Inf;
-P=10.0
-Tfinal=20.0;
+P=25.0
+Tfinal=200.0;
 
-work_distribution = Exponential(1/mu)
+work_distribution = Dirac(Inf)
+deadline_distribution = Exponential(1/mu)
 position_distribution = Product([Uniform(-1.0,1.0),Uniform(-1.0,1.0)])
 #Agents
-arr = PoissonArrivalProcess(lambda*area, work_distribution, 1.0; positionDistribution = position_distribution, velocity=1.0)
+arr = PoissonArrivalProcess(lambda*area, work_distribution, 1.0; positionDistribution = position_distribution, velocity=0.1, sojournTime = deadline_distribution)
 
 Ns = 10
 sta = ChargingStation[]
 
 for i=1:Ns
     pos = rand(position_distribution)
-    push!(sta,ChargingStation(C, P, fifo_policy, snapshots=collect(0:.05:Tfinal), position=pos))
+    push!(sta,ChargingStation(C, P, fifo_policy, snapshots=collect(0:1.0:Tfinal), position=pos))
 end
 
 rtr = Router(shortest_distance)
