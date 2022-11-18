@@ -121,7 +121,7 @@ end
 """
 TraceArrivalProcess Agent
 
-Generates an Arrival process of EVinstances with the given arrival times, requested energies, departure times, charging powers and, optionally, reported departure times.
+Generates an Arrival process of EVinstances with the given arrival times, requested energies, departure times, charging powers and, optionally, reported departure times. Optionally also vehicles may arriva at some position and velocities that may be used by Routers to decide the best station to attach to.
 
 Constructors:
 
@@ -129,7 +129,9 @@ Constructors:
                         requestedEnergies::Vector{Float64},
                         departureTimes::Vector{Float64}, 
                         chargingPowers::Vector{Float64};
-                        reportedDepartureTimes::Vector{Float64} = Float64[])
+                        reportedDepartureTimes::Vector{Float64} = Float64[],
+                        initialPosition::Array{Array{Float64}},
+                        velocities::Array{Float64})
 
 - TraceArrivalProcess(data::DataFrame) where the DataFrame data must have the same column names than the previous constructor.
 
@@ -143,6 +145,8 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
     departureTimes::Vector{Float64}
     chargingPowers::Vector{Float64}
     reportedDepartureTimes::Vector{Float64}
+    initialPositions::Vector{Vector{Float64}}
+    velocities::Vector{Float64}
 
     #sink
     sink::Union{Agent, Nothing}
@@ -160,27 +164,54 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
                                     requestedEnergies::Vector{Float64},
                                     departureTimes::Vector{Float64}, 
                                     chargingPowers::Vector{Float64};
-                                    reportedDepartureTimes::Vector{Float64} = Float64[])
+                                    reportedDepartureTimes::Vector{Float64} = Float64[],
+                                    initialPositions::Vector{Vector{Float64}} = Vector{Float64}[],
+                                    velocities::Vector{Float64} = Float64[]
+            )
 
         @assert issorted(arrivalTimes) "Arrival times must be sorted"
         trace = DataFrame(time=[0.0], totalArrivals=[0.0], totalEnergy=[0.0])
 
         if isempty(reportedDepartureTimes)
-            arr = new(arrivalTimes, requestedEnergies, departureTimes, chargingPowers, departureTimes, nothing, arrivalTimes[1],:Arrival,trace,0.0,0.0)
-        else
-            arr = new(arrivalTimes, requestedEnergies, departureTimes, chargingPowers, reportedDepartureTimes, nothing, arrivalTimes[1],:Arrival,trace,0.0,0.0)
+            reportedDepartureTimes = copy(departureTimes)
         end
 
+        if isempty(initialPositions)
+            initialPositions = [[NaN,NaN] for i=1:length(arrivalTimes)]
+        end
+
+        if isempty(velocities)
+            velocities = [NaN for i=1:length(arrivalTimes)]
+        end
+        
+        arr = new(arrivalTimes, requestedEnergies, departureTimes, chargingPowers, reportedDepartureTimes, initialPositions, velocities, nothing, arrivalTimes[1],:Arrival,trace,0.0,0.0)
+
+        return arr
     end
 
     function TraceArrivalProcess(data::DataFrame)
 
         sort!(data,:arrivalTimes)
         if columnindex(data, :reportedDepartureTimes) == 0
-            arr = TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers])
+            reportedDepartureTimes = Float64[]
         else
-            arr = TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers]; reportedDepartureTimes = data[!,:reportedDepartureTimes])
+            reportedDepartureTimes = data[!,:reportedDepartureTimes]
         end
+
+        if columnindex(data, :initialPositions) == 0
+            initialPositions = Vector{Float64}[]
+        else
+            initialPositions = data[!,:initialPositions]
+        end
+
+        if columnindex(data, :velocities) == 0
+            velocities = Float64[]
+        else
+            velocities = data[!,:velocities]
+        end
+
+        arr = TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers]; reportedDepartureTimes = reportedDepartureTimes, initialPositions = initialPositions, velocities = velocities)
+
         return arr
 
     end
@@ -197,11 +228,13 @@ function handle_event(arr::TraceArrivalProcess, t::Float64, params...)
     power = arr.chargingPowers[arr.totalArrivals]
     departure = arr.departureTimes[arr.totalArrivals]
     reportedDeparture = arr.reportedDepartureTimes[arr.totalArrivals]
-
+    initialPosition = arr.initialPositions[arr.totalArrivals]
+    velocity = arr.velocities[arr.totalArrivals]
 
     arr.totalEnergy = arr.totalEnergy + energy
 
-    newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = reportedDeparture)
+    newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = reportedDeparture, initialPosition = initialPosition, velocity = velocity)
+    
     handle_event(arr.sink, t, :Arrival, newEV)
     
     if arr.totalArrivals < length(arr.arrivalTimes)
