@@ -6,11 +6,11 @@ function update_vehicle!(ev::EVinstance,dt::Float64)
 end
 
 function update_position!(ev::EVinstance, position::Vector{Float64}, dt::Float64)
-    ev.currentPosition = ev.currentPosition + ev.velocity * dt * (position - ev.currentPosition)/sqrt(sum((ev.currentPosition - position).^2))
+    ev.currentPosition = ev.currentPosition + ev.velocity * dt * (position - ev.currentPosition)/norm(position - ev.currentPosition)
 end
 
 function compute_arrival_time(ev::EVinstance, position::Vector{Float64})
-    distance = sqrt(sum((ev.currentPosition - position).^2))
+    distance = norm((ev.currentPosition - position).^2)
     return distance/ev.velocity
 end
 
