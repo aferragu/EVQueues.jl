@@ -1,6 +1,6 @@
 module EVQueues
 
-using ProgressMeter, Distributions, Serialization, DataFrames, DataStructures
+using ProgressMeter, Distributions, Serialization, DataFrames, DataStructures, LinearAlgebra
 
 export  PoissonArrivalProcess, TraceArrivalProcess,
         ChargingStation,

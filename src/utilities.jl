@@ -1,11 +1,31 @@
 ### Internal function to update the state of a vehicle after time dt.
-function update_vehicle(ev::EVinstance,dt::Float64)
-
+function update_vehicle!(ev::EVinstance,dt::Float64)
     ev.currentWorkload-=ev.currentPower*dt;
     ev.currentDeadline-=dt;
     ev.currentReportedDeadline-=dt;
-
 end
+
+function update_position!(ev::EVinstance, position::Vector{Float64}, dt::Float64)
+    ev.currentPosition = ev.currentPosition + ev.velocity * dt * (position - ev.currentPosition)/norm(position - ev.currentPosition)
+end
+
+function compute_arrival_time(ev::EVinstance, position::Vector{Float64})
+    distance = norm((ev.currentPosition - position).^2)
+    return distance/ev.velocity
+end
+
+function compute_congestion_price(sta::ChargingStation)
+    
+    if length(sta.incoming) + length(sta.charging) > 0
+        reqPower = sum([ev.chargingPower for ev in sta.charging]) + sum([ev.chargingPower for ev in sta.incoming])
+        price = max( (reqPower-sta.maximumPower)/reqPower , 0.0)
+    else
+        price = 0.0
+    end
+    
+    return price
+end
+
 
 ### Internal function to compute the mean value of a function f(X) over a trajectory of time T.
 function compute_average(f,T::Vector{Float64},X::Vector{Int64})
@@ -216,7 +236,7 @@ function Base.show(ev::EVinstance)
     println("Current remaining work: $(ev.currentWorkload)")
     println("Current remaining deadline: $(ev.currentDeadline)")
     println("Current remaining deadline as reported: $(ev.currentReportedDeadline)")
-    println("Current charging rate: $(ev.chargingPower)")
+    println("Current charging rate: $(ev.currentPower)")
     println("Remaining energy on departure (if departed): $(ev.departureWorkload)")
     println("Comppletion time (if completed): $(ev.completionTime)")
 

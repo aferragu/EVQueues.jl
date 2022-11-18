@@ -1,6 +1,6 @@
 using EVQueues, Distributions, Plots
 
-function get_largest_deadline_inservice(sta::ChargingStation)
+function get_largest_deadline_inservice(sta::ChargingStation, ev::EVinstance)
     active = filter(ev -> ev.currentPower>0, sta.charging)
     if length(active)>0
         return maximum([ev.currentDeadline for ev in active])
@@ -9,7 +9,7 @@ function get_largest_deadline_inservice(sta::ChargingStation)
     end
 end
 
-function routing_by_deadline(stations::Vector{ChargingStation})
+function routing_by_deadline(stations::Vector{ChargingStation}, ev::EVinstance)
 
     deadlines = get_largest_deadline_inservice.(stations)
     _,idx = findmax(deadlines)

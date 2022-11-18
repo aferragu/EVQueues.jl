@@ -63,7 +63,7 @@ function handle_event(rtr::Router, t::Float64, params...)
         rtr.totalEnergy = rtr.totalEnergy + newEV.requestedEnergy
 
         #apply routing policy. Returns idx of agent to route to.
-        idx = rtr.routingPolicy(convert.(ChargingStation,rtr.sinks))
+        idx = rtr.routingPolicy(convert.(ChargingStation,rtr.sinks),newEV)
 
         #update tracing
         rtr.routedArrivals[idx] = rtr.routedArrivals[idx] + 1

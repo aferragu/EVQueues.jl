@@ -18,6 +18,8 @@ Generates a Poisson Arrival process of EVinstances with given intensity, request
 
 Additional parameters are the initial laxity (Distribution), the total sojourn time (Distribution) and deadline uncertainty (Distribution). Sojourn time takes precedence over laxity if both are defined.
 
+If arrivals are spatial, a position distribution to sample initial positions of vehicles and their velocities can be specified.
+
 Constructor:
 
 PoissonArrivalProcess(  intensity::Float64, 
@@ -25,9 +27,9 @@ PoissonArrivalProcess(  intensity::Float64,
                         chargingPower::Union{Distribution,Float64};
                         initialLaxity::Union{Distribution,Nothing} = nothing,
                         sojournTime::Union{Distribution,Nothing} = nothing, 
-                        uncertainty::Union{Distribution,Nothing} = nothing)
-
-
+                        uncertainty::Union{Distribution,Nothing} = nothing
+                        positionDistribution::Union{Distribution,Nothing} = nothing,
+                        velocity::Float64 = NaN)
 """
 mutable struct PoissonArrivalProcess <: ArrivalProcess
 
@@ -39,6 +41,8 @@ mutable struct PoissonArrivalProcess <: ArrivalProcess
     initialLaxity::Union{Distribution,Nothing}
     sojournTime::Union{Distribution,Nothing}
     uncertainty::Union{Distribution,Nothing}
+    positionDistribution::Union{Distribution,Nothing}
+    velocity::Float64
 
     #sink
     sink::Union{Agent, Nothing}
@@ -57,11 +61,13 @@ mutable struct PoissonArrivalProcess <: ArrivalProcess
                                     chargingPower::Union{Distribution,Float64};
                                     initialLaxity::Union{Distribution,Nothing} = nothing, 
                                     sojournTime::Union{Distribution,Nothing} = nothing, 
-                                    uncertainty::Union{Distribution,Nothing} = nothing)
+                                    uncertainty::Union{Distribution,Nothing} = nothing,
+                                    positionDistribution::Union{Distribution,Nothing} = nothing,
+                                    velocity::Float64 = NaN)
 
         firstArrival = rand(Exponential(1/intensity))
         trace = DataFrame(time=[0.0], totalArrivals=[0.0], totalEnergy=[0.0])
-        new(intensity, requestedEnergy, chargingPower, initialLaxity, sojournTime, uncertainty, nothing, firstArrival,:Arrival, trace, 0.0,0.0);
+        new(intensity, requestedEnergy, chargingPower, initialLaxity, sojournTime, uncertainty, positionDistribution, velocity, nothing, firstArrival,:Arrival, trace, 0.0,0.0);
 
     end
 
@@ -94,10 +100,17 @@ function handle_event(arr::PoissonArrivalProcess, t::Float64, params...)
     
     if  arr.uncertainty !== nothing
         uncertainty_value = rand(arr.uncertainty)
-        newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = departure+uncertainty_value)
+        reportedDepartureTime = departure + uncertainty_value
     else
-        newEV = EVinstance(t,departure,energy,power)
+        reportedDepartureTime = departure
     end
+
+    if arr.positionDistribution !== nothing
+        initialPosition = rand(arr.positionDistribution)
+    else
+        initialPosition = [NaN,NaN]
+    end
+    newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = reportedDepartureTime, initialPosition = initialPosition, velocity = arr.velocity)
 
     handle_event(arr.sink, t, :Arrival, newEV)
     arr.timeToNextEvent = rand(Exponential(1/arr.intensity))
@@ -108,7 +121,7 @@ end
 """
 TraceArrivalProcess Agent
 
-Generates an Arrival process of EVinstances with the given arrival times, requested energies, departure times, charging powers and, optionally, reported departure times.
+Generates an Arrival process of EVinstances with the given arrival times, requested energies, departure times, charging powers and, optionally, reported departure times. Optionally also vehicles may arriva at some position and velocities that may be used by Routers to decide the best station to attach to.
 
 Constructors:
 
@@ -116,7 +129,9 @@ Constructors:
                         requestedEnergies::Vector{Float64},
                         departureTimes::Vector{Float64}, 
                         chargingPowers::Vector{Float64};
-                        reportedDepartureTimes::Vector{Float64} = Float64[])
+                        reportedDepartureTimes::Vector{Float64} = Float64[],
+                        initialPosition::Array{Array{Float64}},
+                        velocities::Array{Float64})
 
 - TraceArrivalProcess(data::DataFrame) where the DataFrame data must have the same column names than the previous constructor.
 
@@ -130,6 +145,8 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
     departureTimes::Vector{Float64}
     chargingPowers::Vector{Float64}
     reportedDepartureTimes::Vector{Float64}
+    initialPositions::Vector{Vector{Float64}}
+    velocities::Vector{Float64}
 
     #sink
     sink::Union{Agent, Nothing}
@@ -147,27 +164,54 @@ mutable struct TraceArrivalProcess <: ArrivalProcess
                                     requestedEnergies::Vector{Float64},
                                     departureTimes::Vector{Float64}, 
                                     chargingPowers::Vector{Float64};
-                                    reportedDepartureTimes::Vector{Float64} = Float64[])
+                                    reportedDepartureTimes::Vector{Float64} = Float64[],
+                                    initialPositions::Vector{Vector{Float64}} = Vector{Float64}[],
+                                    velocities::Vector{Float64} = Float64[]
+            )
 
         @assert issorted(arrivalTimes) "Arrival times must be sorted"
         trace = DataFrame(time=[0.0], totalArrivals=[0.0], totalEnergy=[0.0])
 
         if isempty(reportedDepartureTimes)
-            arr = new(arrivalTimes, requestedEnergies, departureTimes, chargingPowers, departureTimes, nothing, arrivalTimes[1],:Arrival,trace,0.0,0.0)
-        else
-            arr = new(arrivalTimes, requestedEnergies, departureTimes, chargingPowers, reportedDepartureTimes, nothing, arrivalTimes[1],:Arrival,trace,0.0,0.0)
+            reportedDepartureTimes = copy(departureTimes)
         end
 
+        if isempty(initialPositions)
+            initialPositions = [[NaN,NaN] for i=1:length(arrivalTimes)]
+        end
+
+        if isempty(velocities)
+            velocities = [NaN for i=1:length(arrivalTimes)]
+        end
+        
+        arr = new(arrivalTimes, requestedEnergies, departureTimes, chargingPowers, reportedDepartureTimes, initialPositions, velocities, nothing, arrivalTimes[1],:Arrival,trace,0.0,0.0)
+
+        return arr
     end
 
     function TraceArrivalProcess(data::DataFrame)
 
         sort!(data,:arrivalTimes)
         if columnindex(data, :reportedDepartureTimes) == 0
-            arr = TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers])
+            reportedDepartureTimes = Float64[]
         else
-            arr = TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers]; reportedDepartureTimes = data[!,:reportedDepartureTimes])
+            reportedDepartureTimes = data[!,:reportedDepartureTimes]
         end
+
+        if columnindex(data, :initialPositions) == 0
+            initialPositions = Vector{Float64}[]
+        else
+            initialPositions = data[!,:initialPositions]
+        end
+
+        if columnindex(data, :velocities) == 0
+            velocities = Float64[]
+        else
+            velocities = data[!,:velocities]
+        end
+
+        arr = TraceArrivalProcess(data[!,:arrivalTimes], data[!,:requestedEnergies], data[!,:departureTimes], data[!,:chargingPowers]; reportedDepartureTimes = reportedDepartureTimes, initialPositions = initialPositions, velocities = velocities)
+
         return arr
 
     end
@@ -184,11 +228,13 @@ function handle_event(arr::TraceArrivalProcess, t::Float64, params...)
     power = arr.chargingPowers[arr.totalArrivals]
     departure = arr.departureTimes[arr.totalArrivals]
     reportedDeparture = arr.reportedDepartureTimes[arr.totalArrivals]
-
+    initialPosition = arr.initialPositions[arr.totalArrivals]
+    velocity = arr.velocities[arr.totalArrivals]
 
     arr.totalEnergy = arr.totalEnergy + energy
 
-    newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = reportedDeparture)
+    newEV = EVinstance(t,departure,energy,power; reportedDepartureTime = reportedDeparture, initialPosition = initialPosition, velocity = velocity)
+    
     handle_event(arr.sink, t, :Arrival, newEV)
     
     if arr.totalArrivals < length(arr.arrivalTimes)

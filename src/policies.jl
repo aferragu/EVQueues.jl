@@ -292,7 +292,7 @@ end
 #######################################################################
 
 ### Routing policy where the less occupied station is chosen
-function least_loaded_routing(stations::Vector{ChargingStation})
+function least_loaded_routing(stations::Vector{ChargingStation}, ev::EVinstance)
 
     x = [length(sta.charging) for sta in stations]
 
@@ -304,7 +304,7 @@ end
 export least_loaded_routing
 
 ### Random routing policy
-function random_routing(stations::Vector{ChargingStation})
+function random_routing(stations::Vector{ChargingStation},ev::EVinstance)
 
     return rand(DiscreteUniform(1,length(stations)))
     
@@ -313,7 +313,7 @@ end
 export random_routing
 
 ### Random routing policy based on the number of free spaces in each sink
-function free_spaces_routing(stations::Vector{ChargingStation})
+function free_spaces_routing(stations::Vector{ChargingStation},ev::EVinstance)
 
     @assert sum([sta.chargingSpots for sta in stations])<Inf "Free spaces routing requiere finite-capacity stations, found $([sta.chargingSpots for sta in stations])"
 
