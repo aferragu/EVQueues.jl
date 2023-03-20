@@ -211,7 +211,7 @@ function handle_event(sta::ChargingStation, t::Float64, params...)
     if length(sta.charging)>0 #there are vehicles charging
 
         p = sta.schedulingPolicy(sta.charging,sta.maximumPower);
-        sta.currentPower = sum(p)
+        sta.currentPower = p
 
         if minimum([ev.currentWorkload for ev in sta.charging])==0
             nextCharge=0;
