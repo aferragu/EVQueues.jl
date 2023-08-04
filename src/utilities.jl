@@ -10,7 +10,7 @@ function update_position!(ev::EVinstance, position::Vector{Float64}, dt::Float64
 end
 
 function compute_arrival_time(ev::EVinstance, position::Vector{Float64})
-    distance = norm((ev.currentPosition - position).^2)
+    distance = norm(ev.currentPosition - position)
     return distance/ev.velocity
 end
 
