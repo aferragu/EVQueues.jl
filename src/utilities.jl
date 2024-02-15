@@ -28,8 +28,12 @@ end
 
 
 ### Internal function to compute the mean value of a function f(X) over a trajectory of time T.
-function compute_average(f,T::Vector{Float64},X::Vector{Int64})
-    return sum(f(X[1:end-1]).*diff(T))/T[end]
+function compute_average(f::Function,T::Vector{Number},X::Vector{Number})
+    return sum(f(X[1:end-1]).*diff(T))/(T[end]-T[1])
+end
+
+function compute_average(T::Vector{Number},X::Vector{Number})
+    return compute_average(x->x,T,X)
 end
 
 """
@@ -40,14 +44,14 @@ Compute summary statistics of a Charging Station between t_start and t_end. Retu
 function compute_statistics(sta::ChargingStation,t_start=0.0,t_end=Inf)
 
     trace = filter(:time => t -> t_start<= t <=t_end, sta.trace)
-    avgX = compute_average(x->x,trace[!,:time],trace[!,:currentCharging]);
-    avgY = compute_average(x->x,trace[!,:time],trace[!,:currentAlreadyCharged]);
+    avgX = compute_average(trace[!,:time],trace[!,:currentCharging]);
+    avgY = compute_average(trace[!,:time],trace[!,:currentAlreadyCharged]);
 
     rangeX = collect(minimum(trace[!,:currentCharging]):maximum(trace[!,:currentCharging]))
-    pX = [compute_average(x->x.==l,trace[!,:time],trace[!,:currentCharging]) for l in rangeX]
+    pX = [compute_average(x->x.==k,trace[!,:time],trace[!,:currentCharging]) for k in rangeX]
 
     rangeY = collect(minimum(trace[!,:currentAlreadyCharged]):maximum(trace[!,:currentAlreadyCharged]))
-    pY = [compute_average(x->x.==l,trace[!,:time],trace[!,:currentAlreadyCharged]) for l in rangeX]
+    pY = [compute_average(x->x.==k,trace[!,:time],trace[!,:currentAlreadyCharged]) for k in rangeX]
  
     EVs = filter(ev-> ev.arrivalTime>= t_start && ev.departureTime<=t_end, sta.completedEVs)
     avgW = mean([ev.departureWorkload for ev in EVs]);
