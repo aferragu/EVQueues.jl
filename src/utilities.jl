@@ -28,11 +28,11 @@ end
 
 
 ### Internal function to compute the mean value of a function f(X) over a trajectory of time T.
-function compute_average(f::Function,T::Vector{Number},X::Vector{Number})
+function compute_average(f::Function,T::Vector{S},X::Vector{S}) where S<:Number
     return sum(f(X[1:end-1]).*diff(T))/(T[end]-T[1])
 end
 
-function compute_average(T::Vector{Number},X::Vector{Number})
+function compute_average(T::Vector{S},X::Vector{S}) where S<:Number
     return compute_average(x->x,T,X)
 end
 
