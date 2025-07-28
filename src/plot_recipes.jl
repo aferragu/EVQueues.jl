@@ -51,7 +51,7 @@ end
     @series begin
 
         seriestype := :scatter
-        label := "Charging"
+        label --> "Charging"
         seriescolor --> :blue
 
         w[u.>0], d[u.>0]
@@ -60,7 +60,7 @@ end
     @series begin
 
         seriestype := :scatter
-        label := "Waiting"
+        label --> "Waiting"
         seriescolor --> :red
 
         w[u.==0], d[u.==0]
